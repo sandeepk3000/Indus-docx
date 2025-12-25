@@ -1,7 +1,7 @@
 import Input from "./Input";
 import Select from "./Select";
 import { useState } from "react";
-import Button from "./Button"
+import Button from "./Button";
 
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 interface IFormInput {
@@ -13,10 +13,23 @@ interface IFormInput {
   correctAnswer: string;
   marks: string;
 }
+interface Test {
+  testId: string;
+  title: string;
+  questions: IFormInput[];
+}
 const TestForm = () => {
+  //if test is already in local storage then set it to test state  for ts
+
+  const [test, setTest] = useState<Test>();
+  const storedTest = localStorage.getItem("test:sandee@2004");
+  if (storedTest) {
+    const testData = JSON.parse(storedTest);
+  }
+
   const { control, handleSubmit } = useForm<IFormInput>({
     defaultValues: {
-      title: "",
+      title: "sdfsdf",
       optionA: "",
       optionB: "",
       optionC: "",
@@ -25,13 +38,38 @@ const TestForm = () => {
       marks: "0",
     },
   });
-  const [questions, setQuestions] = useState({});
   const onSubmit: SubmitHandler<IFormInput> = (data) => {
-    setQuestions(data);
+    setTest((prev) => {
+      return {
+        ...prev,
+        questions: [...prev?.questions, data],
+      };
+    });
+    localStorage.setItem("test:sandee@2004", JSON.stringify(data));
+  };
+  const handleEdit = () => {
+    console.log("Edit");
   };
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <h1>Make Test</h1>
+      {test && (
+        <div>
+          <Button onClick={handleEdit}>Edit</Button>
+          {test?.questions?.map((question, index) => (
+            <>
+              <Input key={index} type="text" value={question.title} />
+              <Input key={index} type="text" value={question.optionA} />
+              <Input key={index} type="text" value={question.optionB} />
+              <Input key={index} type="text" value={question.optionC} />
+              <Input key={index} type="text" value={question.optionD} />
+              <Input key={index} type="text" value={question.correctAnswer} />
+              <Input key={index} type="text" value={question.marks} />
+            </>
+          ))}
+        </div>
+      )}
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-5">
         <Controller
           name="title"
           control={control}
@@ -47,7 +85,6 @@ const TestForm = () => {
           )}
         />
         <Controller
-         
           name="optionB"
           control={control}
           render={({ field }) => (
@@ -86,18 +123,8 @@ const TestForm = () => {
             <Input {...field} type="text" placeholder="Enter Marks" />
           )}
         />
-        <Button 
-          
-          type="submit">Submit</Button>
+        <Button type="submit">Submit</Button>
       </form>
-      <div>
-        {questions && (
-          <div>
-            <h2>Questions</h2>
-            <pre>{JSON.stringify(questions, null, 2)}</pre>
-          </div>
-        )}
-      </div>
     </>
   );
 };
