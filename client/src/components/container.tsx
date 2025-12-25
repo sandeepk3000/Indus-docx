@@ -7,7 +7,7 @@ interface ContainerProps {
 const Container = ({ children, className, props }: ContainerProps) => {
   return (
     <div
-      className={`w-full max-w-[1280px] mx-auto px-5 md:px-10 ${className}`}
+      className={`w-full max-w-[1280px] mx-auto px-5 py-5 md:px-10  ${className}`}
       {...props}
     >
       {children}
