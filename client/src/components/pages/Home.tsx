@@ -5,11 +5,11 @@ import Typo from "../Typo";
 import { FaSearch } from "react-icons/fa";
 const Home = () => {
   const [search, setSearch] = useState<string>("");
-
   const cardsData = [
     {
       title: "Blog 1",
-      description:"**Java Description**Java is a high-level, object-oriented programming language developed by **James Gosling** at **Sun Microsystems** in **1995**. It is designed to be **platform-independent**, meaning Java programs can run on any operating system that has a Java Virtual Machine (JVM). This feature is commonly known as **“Write Once, Run Anywhere.",
+      description:
+        "**Java Description**Java is a high-level, object-oriented programming language developed by **James Gosling** at **Sun Microsystems** in **1995**. It is designed to be **platform-independent**, meaning Java programs can run on any operating system that has a Java Virtual Machine (JVM). This feature is commonly known as **“Write Once, Run Anywhere.",
       image: "https://picsum.photos/200/300",
       tags: ["Javascript's", "React"],
     },
@@ -23,6 +23,9 @@ const Home = () => {
       description: "Description 3",
       image: "https://picsum.photos/200/300",
     },
+    {
+      
+    }
   ];
   return (
     <div>
@@ -41,7 +44,7 @@ const Home = () => {
       />
       <Typo className="mt-4">Blogs</Typo>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2  lg:grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
         {cardsData.map((card, index) => {
           return <Card key={index} {...card} />;
         })}

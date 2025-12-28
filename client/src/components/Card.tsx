@@ -9,7 +9,7 @@ interface CardProps {
 const Card = ({ image, title, description, tags }: CardProps) => {
   return (
     <Link to={"/make-test"}>
-      <div className="bg-neutral800 overflow-hidden rounded-lg shadow-md overflow-hidden p-4">
+      <div className="bg-white overflow-hidden rounded-lg shadow-md overflow-hidden p-4">
         <img
           src={image}
           alt={title}
@@ -20,14 +20,16 @@ const Card = ({ image, title, description, tags }: CardProps) => {
             {tags?.map((tag, index) => (
               <span
                 key={index}
-                className="bg-primary text-white text-xs font-medium px-2.5 py-0.5 rounded"
+                className="bg-accent-light text-accent-dark text-xs font-medium px-2.5 py-0.5 rounded"
               >
                 {tag}
               </span>
             ))}
           </div>
-          <h3 className="text-lg font-semibold my-4 text-white">{title}</h3>
-          <p className="text-gray my-4 text-textLight">
+          <h3 className="text-lg font-semibold my-4 text-background-dark">
+            {title}
+          </h3>
+          <p className="text-gray my-4 text-text-muted">
             {description?.length > 50
               ? description?.slice(0, 150) + "..."
               : description}

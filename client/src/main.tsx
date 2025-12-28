@@ -18,17 +18,15 @@ const router = createBrowserRouter([
       },
       {
         path: "/single-blog/:id",
-        element: <SingleBlog />
+        element: <SingleBlog />,
       },
       {
-        path:"/make-test",
-        element: <MakeTest />
-      }
+        path: "/make-test",
+        element: <MakeTest />,
+      },
     ],
   },
 ]);
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <RouterProvider router={router} />
-  </StrictMode>,
+  <RouterProvider router={router} />,
 );
