@@ -6,6 +6,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import SingleBlog from "./components/pages/SingleBlog";
 import Home from "./components/pages/Home";
 import MakeTest from "./components/pages/MakeTest";
+import Quiz from "./components/pages/Quiz.tsx";
 
 const router = createBrowserRouter([
   {
@@ -21,8 +22,12 @@ const router = createBrowserRouter([
         element: <SingleBlog />,
       },
       {
-        path: "/make-test",
+        path: "/quiz",
         element: <MakeTest />,
+      },
+      {
+        path: "/make-test",
+        element: <Quiz />,
       },
     ],
   },

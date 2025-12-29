@@ -6,12 +6,12 @@ interface ButtonProps {
   className?: string;
   props?: React.HTMLAttributes<HTMLButtonElement>;
 }
-const Button = ({ children, className, onClick, props }: ButtonProps) => {
+const Button = ({ children, className, onClick, props}: ButtonProps) => {
   return (
     <button
       onClick={onClick}
       {...props}
-      className={`bg-blue-700 hover:bg-primary text-white font-bold py-2 px-4  focus:outline-none focus:shadow-outline ${className}`}
+      className={` hover:bg-primary text-white font-bold focus:outline-none focus:shadow-outline ${className}`}
     >
       {children}
     </button>

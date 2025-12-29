@@ -18,7 +18,8 @@ interface IFormInputAction<T> {
   payload: T;
   type: "add" | "edit";
 }
-interface Test {
+
+export interface Test {
   testId: string;
   title: string;
   questions: IFormInput[];
@@ -231,6 +232,9 @@ const TestForm = () => {
                 {question.title}
               </p>
 
+              <p className="mt-5 w-full p-2 border focus:ring-2 outline-none focus:ring-blue-700">
+                {question.optionA}
+              </p>
               <p className="mt-5 w-full p-2 border focus:ring-2 outline-none focus:ring-blue-700">
                 {question.optionB}
               </p>
