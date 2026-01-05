@@ -29,7 +29,7 @@ const Quiz = () => {
   const [isSticky, setIsSticky] = useState<boolean>(false);
   useEffect(() => {
     const localTest: Test | null = getTestFromLocal("2");
-    console.log("localTest", localTest);
+
     if (localTest) {
       setTest(localTest);
     }
@@ -46,7 +46,7 @@ const Quiz = () => {
     const filteredAnswers = yourAnswers.filter(
       (answer) => answer.questionId !== yourAnswer.questionId,
     );
-    const isAnswerExist = yourAnswers.find(
+    const isAnswerExist:YourAnswer | undefined  = yourAnswers.find(
       (answer) =>
         answer.questionId === yourAnswer.questionId &&
         answer.answer === yourAnswer.answer,
@@ -131,7 +131,6 @@ const Quiz = () => {
       setResult(r);
     }
   };
-  useEffect(() => {}, [result]);
   useEffect(() => {
     console.log(ref);
     const observer: IntersectionObserver = new IntersectionObserver(
@@ -147,9 +146,6 @@ const Quiz = () => {
     }
     return () => observer.disconnect();
   }, [isSticky]);
-  useEffect(() => {
-    console.log("yourAnswers", yourAnswers);
-  }, [yourAnswers]);
   return (
     <div className="w-full bg-gray grid grid-cols-1 md:grid-cols-2 gap-5 relative">
       <div className="relative">
