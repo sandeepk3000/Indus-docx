@@ -7,6 +7,7 @@ import SingleBlog from "./components/pages/SingleBlog";
 import Home from "./components/pages/Home";
 import MakeTest from "./components/pages/MakeTest";
 import Quiz from "./components/pages/Quiz.tsx";
+import Admin from "./components/pages/Admin.tsx";
 
 const router = createBrowserRouter([
   {
@@ -22,11 +23,15 @@ const router = createBrowserRouter([
         element: <SingleBlog />,
       },
       {
-        path: "/quiz",
+        path: "/make-test",
         element: <MakeTest />,
       },
       {
-        path: "/make-test",
+         path: "/admin",
+        element: <Admin />
+      },
+      {
+        path: "/quiz",
         element: <Quiz />,
       },
     ],

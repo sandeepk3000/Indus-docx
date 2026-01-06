@@ -9,7 +9,8 @@ interface YourAnswer {
   answer: string;
   isCorrect?: boolean;
 }
-interface Result<T> {
+export interface Result<T> {
+  userId: string;
   test: T;
   yourAnswers: YourAnswer[];
   totalMarks: number;
@@ -46,7 +47,7 @@ const Quiz = () => {
     const filteredAnswers = yourAnswers.filter(
       (answer) => answer.questionId !== yourAnswer.questionId,
     );
-    const isAnswerExist:YourAnswer | undefined  = yourAnswers.find(
+    const isAnswerExist: YourAnswer | undefined = yourAnswers.find(
       (answer) =>
         answer.questionId === yourAnswer.questionId &&
         answer.answer === yourAnswer.answer,
@@ -118,6 +119,7 @@ const Quiz = () => {
       const totalQuestions = test.questions.length;
       const totalMarksObtained = totalCorrect;
       const r: Result<Test> = {
+        userId: "1",
         test,
         yourAnswers: checkedAnswers,
         totalMarks,
