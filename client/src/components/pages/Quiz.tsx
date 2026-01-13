@@ -1,18 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
 import Button from "../Button";
-import { type Test } from "../TestForm";
+import { type Test } from "../QuestionForm";
 import Typo from "../Typo";
 import Timer from "../Timer";
-import { useNavigate, Link } from "react-router-dom";
+import Leaderboard from "../Leaderboard";
+import { type IFormInput } from "../QuestionForm";
+
 interface YourAnswer {
   questionId: string;
   answer: string;
-  isCorrect?: boolean;
 }
-export interface Result<T> {
+interface CheckedAnswer extends Omit<IFormInput, "marks"> {
+  isCorrect: boolean;
+  answer: string;
+}
+export interface Result {
   userId: string;
-  test: T;
-  yourAnswers: YourAnswer[];
+  testId: string;
+  checkedAnswers: CheckedAnswer[];
   totalMarks: number;
   totalCorrect: number;
   totalWrong: number;
@@ -25,7 +30,7 @@ const Quiz = () => {
   const [test, setTest] = useState<Test | null>(null);
   const [isTimerStop, setIsTimerStop] = useState<boolean>(false);
   const [yourAnswers, setYourAnswers] = useState<YourAnswer[]>([]);
-  const [result, setResult] = useState<Result<Test> | null>(null);
+  const [result, setResult] = useState<Result | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const [isSticky, setIsSticky] = useState<boolean>(false);
   useEffect(() => {
@@ -70,58 +75,72 @@ const Quiz = () => {
     }
   }, [isTimerStop]);
   const handleSubmit = () => {
-    const checkedAnswers: YourAnswer[] | undefined = test?.questions.map(
-      (question) => {
+    const checkedAnswers: CheckedAnswer[] | undefined = test?.questions.map(
+      (question: IFormInput) => {
         const yourAnswer = yourAnswers.find(
           (answer) => answer.questionId === question.questionId,
         );
         if (yourAnswer) {
           return {
+            ...question,
             answer: yourAnswer.answer,
-            questionId: question.questionId,
             isCorrect: yourAnswer.answer === question.correctAnswer,
           };
         }
         return {
+          ...question,
           answer: "",
-          questionId: question.questionId,
           isCorrect: false,
         };
       },
     );
+
     if (checkedAnswers && test) {
-      const totalMarks: number = test.questions.reduce((acc, _) => {
-        return acc + 1;
-      }, 0);
-      const totalCorrect: number = checkedAnswers.reduce((acc, answer) => {
-        if (answer.isCorrect) {
-          const question = test.questions.find(
-            (question) => question.questionId === answer.questionId,
-          );
-          if (question) {
+      const totalMarks: number = test.questions.reduce(
+        (acc: number, _: any) => {
+          return acc + 1;
+        },
+        0,
+      );
+      const totalCorrect: number = checkedAnswers.reduce(
+        (acc: number, answer: CheckedAnswer) => {
+          if (answer.isCorrect) {
+            const question = test.questions.find(
+              (question: IFormInput) =>
+                question.questionId === answer.questionId,
+            );
+            if (question) {
+              return acc + 1;
+            }
+          }
+          return acc;
+        },
+        0,
+      );
+      const totalWrong: number = checkedAnswers.reduce(
+        (acc: number, answer: CheckedAnswer) => {
+          if (!answer.isCorrect && answer.answer !== "") {
             return acc + 1;
           }
-        }
-        return acc;
-      }, 0);
-      const totalWrong: number = checkedAnswers.reduce((acc, answer) => {
-        if (!answer.isCorrect && answer.answer !== "") {
-          return acc + 1;
-        }
-        return acc;
-      }, 0);
-      const totalSkipped: number = checkedAnswers.reduce((acc, answer) => {
-        if (answer.answer === "") {
-          return acc + 1;
-        }
-        return acc;
-      }, 0);
-      const totalQuestions = test.questions.length;
-      const totalMarksObtained = totalCorrect;
-      const r: Result<Test> = {
+          return acc;
+        },
+        0,
+      );
+      const totalSkipped: number = checkedAnswers.reduce(
+        (acc: number, answer: CheckedAnswer) => {
+          if (answer.answer === "") {
+            return acc + 1;
+          }
+          return acc;
+        },
+        0,
+      );
+      const totalQuestions: number = test.questions.length;
+      const totalMarksObtained: number = totalCorrect;
+      const r: Result = {
         userId: "1",
-        test,
-        yourAnswers: checkedAnswers,
+        testId: test.testId,
+        checkedAnswers,
         totalMarks,
         totalCorrect,
         totalWrong,
@@ -148,170 +167,223 @@ const Quiz = () => {
     }
     return () => observer.disconnect();
   }, [isSticky]);
+  const calculateGrade = (percentage: number): string => {
+    if (percentage >= 90) {
+      return "A+";
+    } else if (percentage >= 80) {
+      return "A";
+    } else if (percentage >= 70) {
+      return "B";
+    } else if (percentage >= 60) {
+      return "C";
+    } else if (percentage >= 50) {
+      return "D";
+    } else if (percentage >= 40) {
+      return "E";
+    } else {
+      return "F";
+    }
+  };
+  const calculatePercentage = (
+    totalMarks: number,
+    totalMarksObtained: number,
+  ): number => {
+    return Math.round((totalMarksObtained / totalMarks) * 100);
+  };
   return (
-    <div className="w-full bg-gray grid grid-cols-1 md:grid-cols-2 gap-5 relative">
-      <div className="relative">
-        <div
-          className={` w-full flex gap-5 w-auto flex-row md:flex-col ${isSticky ? "md:sticky fixed" : ""} bg-primary left-0 bottom-0 md:top-0 p-4`}
-        >
-          <Timer
-            className="text-primary bg-white ring rounded-md text-center grid place-items-center p-2"
-            stop={handleStopTimer}
-            time={10}
-            isRunning={true}
-          />
-          <div className="bg-white w-full  rounded-md p-2 ring ring-primary flex flex-row md:flex-col gap-5 overflow-x-auto">
-            <div className="fit-content flex  flex-row gap-5 md:flex-wrap justify-start items-center">
-              {test?.questions.map((question, index) => {
-                const yourAnswer = yourAnswers.find(
-                  (answer) => answer.questionId === question.questionId,
-                );
-                return (
-                  <Button
-                    onClick={() => {
-                      document
-                        .getElementById(question.questionId)
-                        ?.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className={`rounded-full bg-accent-dark shrink-0 h-8 w-8  ${
-                      yourAnswer ? "bg-primary" : ""
-                    }`}
-                  >
-                    {index + 1}
-                  </Button>
-                );
-              })}
-            </div>
-            <Button
-              className={`bg-blue-700 px-5 py-2 shrink-0`}
-              onClick={handleSubmit}
+    <div>
+      {!result ? (
+        <div className="w-full bg-gray grid grid-cols-1 md:grid-cols-2 gap-5 relative">
+          <div className="relative">
+            <div
+              className={` w-full flex gap-5 w-auto flex-row md:flex-col ${isSticky ? "md:sticky fixed" : ""} bg-primary left-0 bottom-0 md:top-0 p-4`}
             >
-              Submit
-            </Button>
+              <Timer
+                className="text-primary bg-white ring rounded-md text-center grid place-items-center p-2"
+                stop={handleStopTimer}
+                time={10}
+                isRunning={true}
+              />
+              <div className="bg-white w-full  rounded-md p-2 ring ring-primary flex flex-row md:flex-col gap-5 overflow-x-auto">
+                <div className="fit-content flex  flex-row gap-5 md:flex-wrap justify-start items-center">
+                  {test?.questions.map((question, index) => {
+                    const yourAnswer = yourAnswers.find(
+                      (answer) => answer.questionId === question.questionId,
+                    );
+                    return (
+                      <Button
+                        onClick={() => {
+                          document
+                            .getElementById(question.questionId)
+                            ?.scrollIntoView({ behavior: "smooth" });
+                        }}
+                        className={`rounded-full bg-accent-dark shrink-0 h-8 w-8  ${
+                          yourAnswer ? "bg-primary" : ""
+                        }`}
+                      >
+                        {index + 1}
+                      </Button>
+                    );
+                  })}
+                </div>
+                {!isTimerStop ? (
+                  <Button
+                    className={`bg-blue-700 px-5 py-2 shrink-0`}
+                    onClick={handleSubmit}
+                  >
+                    Submit
+                  </Button>
+                ) : (
+                  ""
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col justify-center gap-5">
+            <div ref={ref}></div>
+            {test?.questions.map((question, index) => {
+              const yourAnswer = yourAnswers.find(
+                (answer) => answer.questionId === question.questionId,
+              );
+              return (
+                <div
+                  id={question.questionId}
+                  className="bg-white shadow-md border-1 p-4 rounded-md border-background-light"
+                >
+                  <Typo className="text-lg font-bold text-background-dark">
+                    {`Questions ${index + 1} of ${test.questions.length}`}
+                  </Typo>
+                  <Typo className="text-xl font-bold text-background-dark my-4">
+                    {`Q${index + 1})  ${question.title}`}
+                  </Typo>
+                  <div className="grid sm:grid-cols-2 gap-5">
+                    <Button
+                      className={`w-full h-12 flex border-3 rounded-md border-background-light items-center justify-start bg-white p-1 ${
+                        yourAnswer?.answer === "A" ? "border-primary" : ""
+                      }`}
+                      onClick={() =>
+                        handleOption({
+                          questionId: question.questionId,
+                          answer: "A",
+                        })
+                      }
+                    >
+                      <span
+                        className={`w-8 h-full shrink-0  rounded-md inline-flex items-center justify-center bg-background-light text-background-dark font-bold mr-2 ${
+                          yourAnswer?.answer === "A"
+                            ? "bg-primary-light text-white"
+                            : ""
+                        }`}
+                      >
+                        A
+                      </span>
+                      <span className="text-background-dark font-bold">
+                        {question.optionA}
+                      </span>
+                    </Button>
+                    <Button
+                      className={`w-full h-12 flex border-3 rounded-md border-background-light items-center justify-start bg-white p-1 ${
+                        yourAnswer?.answer === "B" ? "border-primary" : ""
+                      }`}
+                      onClick={() =>
+                        handleOption({
+                          questionId: question.questionId,
+                          answer: "B",
+                        })
+                      }
+                    >
+                      <span
+                        className={`w-8 h-full shrink-0  rounded-md inline-flex items-center justify-center bg-background-light text-background-dark font-bold mr-2 ${
+                          yourAnswer?.answer === "B"
+                            ? "bg-primary-light text-white"
+                            : ""
+                        }`}
+                      >
+                        B
+                      </span>
+                      <span className="text-background-dark font-bold">
+                        {question.optionB}
+                      </span>
+                    </Button>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-5 mt-4">
+                    <Button
+                      className={`w-full h-12 flex border-3 rounded-md border-background-light items-center justify-start bg-white p-1 ${
+                        yourAnswer?.answer === "C" ? "border-primary" : ""
+                      }`}
+                      onClick={() =>
+                        handleOption({
+                          questionId: question.questionId,
+                          answer: "C",
+                        })
+                      }
+                    >
+                      <span
+                        className={`w-8 h-full shrink-0  rounded-md inline-flex items-center justify-center bg-background-light text-background-dark font-bold mr-2 ${
+                          yourAnswer?.answer === "C"
+                            ? "bg-primary-light text-white"
+                            : ""
+                        }`}
+                      >
+                        C
+                      </span>
+                      <span className="text-background-dark font-bold">
+                        {question.optionC}
+                      </span>
+                    </Button>
+                    <Button
+                      className={`w-full h-12 flex border-3 rounded-md border-background-light items-center justify-start bg-white p-1 ${
+                        yourAnswer?.answer === "D" ? "border-primary" : ""
+                      }`}
+                      onClick={() =>
+                        handleOption({
+                          questionId: question.questionId,
+                          answer: "D",
+                        })
+                      }
+                    >
+                      <span
+                        className={`w-8 h-full shrink-0  rounded-md inline-flex items-center justify-center bg-background-light text-background-dark font-bold mr-2 ${
+                          yourAnswer?.answer === "D"
+                            ? "bg-primary-light text-white"
+                            : ""
+                        }`}
+                      >
+                        D
+                      </span>
+                      <span className="text-background-dark font-bold">
+                        {question.optionD}
+                      </span>
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      </div>
-      <div className="flex flex-col justify-center gap-5">
-        <div ref={ref}></div>
-        {test?.questions.map((question, index) => {
-          const yourAnswer = yourAnswers.find(
-            (answer) => answer.questionId === question.questionId,
-          );
-          return (
-            <div
-              id={question.questionId}
-              className="bg-white shadow-md border-1 p-4 rounded-md border-background-light"
-            >
-              <Typo className="text-lg font-bold text-background-dark">
-                {`Questions ${index + 1} of ${test.questions.length}`}
-              </Typo>
-              <Typo className="text-xl font-bold text-background-dark my-4">
-                {`Q${index + 1})  ${question.title}`}
-              </Typo>
-              <div className="grid sm:grid-cols-2 gap-5">
-                <Button
-                  className={`w-full h-12 flex border-3 rounded-md border-background-light items-center justify-start bg-white p-1 ${
-                    yourAnswer?.answer === "A" ? "border-primary" : ""
-                  }`}
-                  onClick={() =>
-                    handleOption({
-                      questionId: question.questionId,
-                      answer: "A",
-                    })
-                  }
-                >
-                  <span
-                    className={`w-8 h-full shrink-0  rounded-md inline-flex items-center justify-center bg-background-light text-background-dark font-bold mr-2 ${
-                      yourAnswer?.answer === "A"
-                        ? "bg-primary-light text-white"
-                        : ""
-                    }`}
-                  >
-                    A
-                  </span>
-                  <span className="text-background-dark font-bold">
-                    {question.optionA}
-                  </span>
-                </Button>
-                <Button
-                  className={`w-full h-12 flex border-3 rounded-md border-background-light items-center justify-start bg-white p-1 ${
-                    yourAnswer?.answer === "B" ? "border-primary" : ""
-                  }`}
-                  onClick={() =>
-                    handleOption({
-                      questionId: question.questionId,
-                      answer: "B",
-                    })
-                  }
-                >
-                  <span
-                    className={`w-8 h-full shrink-0  rounded-md inline-flex items-center justify-center bg-background-light text-background-dark font-bold mr-2 ${
-                      yourAnswer?.answer === "B"
-                        ? "bg-primary-light text-white"
-                        : ""
-                    }`}
-                  >
-                    B
-                  </span>
-                  <span className="text-background-dark font-bold">
-                    {question.optionB}
-                  </span>
-                </Button>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-5 mt-4">
-                <Button
-                  className={`w-full h-12 flex border-3 rounded-md border-background-light items-center justify-start bg-white p-1 ${
-                    yourAnswer?.answer === "C" ? "border-primary" : ""
-                  }`}
-                  onClick={() =>
-                    handleOption({
-                      questionId: question.questionId,
-                      answer: "C",
-                    })
-                  }
-                >
-                  <span
-                    className={`w-8 h-full shrink-0  rounded-md inline-flex items-center justify-center bg-background-light text-background-dark font-bold mr-2 ${
-                      yourAnswer?.answer === "C"
-                        ? "bg-primary-light text-white"
-                        : ""
-                    }`}
-                  >
-                    C
-                  </span>
-                  <span className="text-background-dark font-bold">
-                    {question.optionC}
-                  </span>
-                </Button>
-                <Button
-                  className={`w-full h-12 flex border-3 rounded-md border-background-light items-center justify-start bg-white p-1 ${
-                    yourAnswer?.answer === "D" ? "border-primary" : ""
-                  }`}
-                  onClick={() =>
-                    handleOption({
-                      questionId: question.questionId,
-                      answer: "D",
-                    })
-                  }
-                >
-                  <span
-                    className={`w-8 h-full shrink-0  rounded-md inline-flex items-center justify-center bg-background-light text-background-dark font-bold mr-2 ${
-                      yourAnswer?.answer === "D"
-                        ? "bg-primary-light text-white"
-                        : ""
-                    }`}
-                  >
-                    D
-                  </span>
-                  <span className="text-background-dark font-bold">
-                    {question.optionD}
-                  </span>
-                </Button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      ) : (
+        <Leaderboard
+          students={[
+            {
+              name: "John Doe",
+              email: "john@gmail.com",
+              img: "https://randomuser.me/api/portraits/men/1.jpg",
+              totalMarks: result.totalMarks,
+              totalCorrect: result.totalCorrect,
+              percentage: calculatePercentage(
+                result.totalMarks,
+                result.totalMarksObtained,
+              ),
+              grade: calculateGrade(
+                calculatePercentage(
+                  result.totalMarks,
+                  result.totalMarksObtained,
+                ),
+              ),
+            },
+          ]}
+        />
+      )}
     </div>
   );
 };

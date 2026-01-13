@@ -3,8 +3,11 @@ import { useState } from "react";
 import Card from "../Card";
 import Typo from "../Typo";
 import { FaSearch } from "react-icons/fa";
+import { useAuth0 } from "@auth0/auth0-react";
 const Home = () => {
   const [search, setSearch] = useState<string>("");
+  const { loginWithRedirect, logout, user, isLoading, isAuthenticated } = useAuth0();
+
   const cardsData = [
     {
       title: "Blog 1",
@@ -23,15 +26,15 @@ const Home = () => {
       description: "Description 3",
       image: "https://picsum.photos/200/300",
     },
-    {
-      
-    }
+    {},
   ];
   return (
     <div>
+      {!isLoading && <div>{String(isAuthenticated)}</div>}
       <Typo className="text-2xl font-bold mb-4 text-center text-neutral900 text-[45px]">
         Indus Docx
       </Typo>
+
       <Input
         rightIcon={<FaSearch />}
         placeholder="Search"
@@ -42,6 +45,7 @@ const Home = () => {
         }}
         value={search}
       />
+      <button onClick={() => logout()}>Login</button>
       <Typo className="mt-4">Blogs</Typo>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">

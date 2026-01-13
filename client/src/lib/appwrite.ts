@@ -3,6 +3,6 @@ import { Client } from "appwrite";
 const client = new Client();
 
 client
-    .setEndpoint('https://cloud.appwrite.io/v1')
-    .setProject('64b3609a145244944157');
+    .setEndpoint("https://fra.cloud.appwrite.io/v1")
+    .setProject("695c5fd400115e58f97a");
 export default client;

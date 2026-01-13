@@ -3,7 +3,11 @@ import { useState } from "react";
 import Leaderboard from "../Leaderboard";
 import LiveExamPanel from "../LiveExamPanel";
 import Test from "../Test";
+import QuestionForm from "../QuestionForm";
+import { useAuth0 } from "@auth0/auth0-react";
 const Admin = () => {
+  const { user } = useAuth0();
+  console.log(user);
   const [activeTab, setActiveTab] = useState("Live");
   const [breadcrumbs, setBreadcrumbs] = useState<string[]>([]);
   const tabs = ["Live", "Tests", "Leaderboard", "Students"];
@@ -47,7 +51,20 @@ const Admin = () => {
   ];
   return (
     <div className="max-w-5xl mx-auto mt-6">
+      
       {/* Tabs Header */}
+      <img src={user?.picture} alt="" />
+      <h1>{user?.name}</h1>
+      <h1>{user?.email}</h1>
+      <h1>{user?.sub}</h1>
+      <h1>{user?.nickname}</h1>
+      <h1>{user?.updated_at}</h1>
+      <h1>{user?.email_verified}</h1>
+      <h1>{user?.locale}</h1>
+      <h1>{user?.given_name}</h1>
+      <h1>{user?.family_name}</h1>
+      <h1>{user?.name}</h1>
+      
       <div className="flex border-b border-gray-300">
         {tabs.map((tab) => (
           <button
@@ -68,9 +85,11 @@ const Admin = () => {
       {/* Tab Content */}
       <div className="mt-6">
         {activeTab === "Live" && <LiveExamPanel />}
-        {activeTab === "Tests" && <Test onAddTest={()=> setBreadcrumbs([activeTab,"AddTest"])} />}
+        {activeTab === "Tests" && (
+          <Test onAddTest={() => setBreadcrumbs([activeTab, "AddTest"])} />
+        )}
         {activeTab === "Leaderboard" && <Leaderboard students={students} />}
-        {activeTab === "Students" && <div>👨‍🎓 Students List</div>}
+        {activeTab === "Students" && <QuestionForm />}
         {breadcrumbs.includes("AddTest") && <div>add test </div>}
       </div>
     </div>

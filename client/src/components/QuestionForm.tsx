@@ -4,7 +4,7 @@ import { useEffect, useState, useId, useRef } from "react";
 import { v4 as uuid } from "uuid";
 import Button from "./Button";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
-interface IFormInput {
+export interface IFormInput {
   questionId: string;
   title: string;
   optionA: string;
@@ -178,7 +178,7 @@ const TestForm = () => {
             <div key={opt}>
               <label className="text-sm font-medium">Option {opt}</label>
               <Controller
-                name={`option${opt}`}
+                name={`option${opt}` as keyof IFormInput}
                 control={control}
                 render={({ field }) => (
                   <Input
@@ -222,7 +222,11 @@ const TestForm = () => {
         </div>
 
         {/* Submit */}
-        <Button className="w-full py-3">
+        <Button
+          className="w-full bg-blue-600 text-white px-5 py-3 rounded-md font-medium
+           hover:bg-blue-700 transition
+           focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
           {edit ? "Update Question" : "Add Question"}
         </Button>
       </form>
@@ -234,7 +238,7 @@ const TestForm = () => {
             Questions ({test.questions.length})
           </h2>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-2 place-items-center lg:grid-cols-3 gap-5">
             {test.questions.map((q, index) => (
               <div
                 key={q.questionId}
@@ -242,7 +246,9 @@ const TestForm = () => {
               >
                 {/* Edit */}
                 <Button
-                  className="absolute top-3 right-3"
+                  className="absolute top-2 right-2 bg-amber-500 text-white px-3 py-1.5 rounded-md text-sm font-medium
+                    hover:bg-amber-600 transition
+                    focus:outline-none focus:ring-2 focus:ring-amber-400"
                   onClick={() => editQuestion(q.questionId)}
                 >
                   Edit
@@ -252,20 +258,24 @@ const TestForm = () => {
                   Q{index + 1}. {q.title}
                 </h3>
 
-                <ul className="mt-3 space-y-1 text-sm">
+                <div className="mt-3 space-y-1 text-sm">
                   {["A", "B", "C", "D"].map((opt) => (
-                    <li
+                    <div
                       key={opt}
-                      className={`p-2 rounded border ${
+                      className={`p-2 w-75 overflow-x-auto rounded border ${
                         q.correctAnswer === opt
                           ? "bg-green-50 border-green-400 font-medium"
                           : ""
                       }`}
                     >
-                      {opt}. {q[`option${opt}` as keyof IFormInput]}
-                    </li>
+                      <span>
+                        {opt}
+                        {" " + ""}
+                        {q[`option${opt}` as keyof typeof q].trim()}
+                      </span>
+                    </div>
                   ))}
-                </ul>
+                </div>
 
                 <div className="mt-3 flex justify-between text-sm text-gray-600">
                   <span>Correct: {q.correctAnswer}</span>

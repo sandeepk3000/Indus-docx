@@ -22,8 +22,12 @@ const Leaderboard = ({ students }: { students: LeaderboardProps[] }) => {
         >
           {/* Name */}
           <div className="flex justify-between md:block md:p-3">
-            <span className="md:hidden text-gray-500">Rank</span>
-            <span>{index + 1}</span>
+            {students.length > 1 && (
+              <>
+                <span className="md:hidden text-gray-500">Rank</span>
+                <span>{index + 1}</span>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-3 md:p-3">
@@ -43,22 +47,22 @@ const Leaderboard = ({ students }: { students: LeaderboardProps[] }) => {
           {/* Stats */}
           <div className="flex justify-between md:block md:p-3">
             <span className="md:hidden text-gray-500">Total Marks</span>
-            <span>100</span>
+            <span>{student.totalMarks}</span>
           </div>
 
           <div className="flex justify-between md:block md:p-3">
             <span className="md:hidden text-gray-500">Correct</span>
-            <span>85</span>
+            <span>{student.totalCorrect}</span>
           </div>
 
           <div className="flex justify-between md:block md:p-3">
             <span className="md:hidden text-gray-500">Percentage</span>
-            <span>85%</span>
+            <span>{`${student.percentage}%`}</span>
           </div>
 
           <div className="flex justify-between md:block md:p-3 font-bold text-green-600">
             <span className="md:hidden text-gray-500">Grade</span>
-            <span>A</span>
+            <span>{student.grade}</span>
           </div>
         </div>
       ))}

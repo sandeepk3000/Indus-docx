@@ -3,7 +3,7 @@ import React from "react";
 interface InputProps {
   type: string;
   placeholder?: string;
-  value: string;
+  value?: string;
   props?: React.HTMLAttributes<HTMLInputElement>;
   className?: string;
   leftIcon?: React.ReactNode;
