@@ -33,24 +33,25 @@ const TestForm = () => {
   });
 
   const onSubmit = async (data: TestFormValues) => {
-    console.log(data);
     setIsLoading(true);
     setError(null);
-    console.log(JSON.stringify(data.thumbnail ))
+    // console.log(JSON.stringify(data.thumbnail));
     try {
-      const thumbnail = data.thumbnail?.[0];
-      console.log(thumbnail)
-        if (thumbnail) {
-        const thumbnailRes = await upload(thumbnail);
+      const thumbnail = data.thumbnail;
+      console.log(thumbnail?.[0].name);
+      if (thumbnail) {
+        const thumbnailRes = await upload(thumbnail?.[0]);
 
         if (thumbnailRes) {
           const test = await createTest({
             ...data,
             thumbnail: thumbnailRes.$id,
           });
+          console.log(test);
         }
       }
     } catch (err) {
+      console.log(err);
       setError(err.message);
     }
   };
@@ -69,8 +70,9 @@ const TestForm = () => {
               control={control}
               render={({ field }) => (
                 <Input
-                  {...field}
                   type="text"
+                  {...field}
+                  onChange={(e) => field.onChange(e.target.value)}
                   placeholder="Enter test title"
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500"
                 />
@@ -89,7 +91,9 @@ const TestForm = () => {
               render={({ field }) => (
                 <TextArea
                   {...field}
+                  onChange={(e) => field.onChange(e.target.value)}
                   rows={4}
+                  value={field.value}
                   placeholder="Enter test description"
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500"
                 />
@@ -107,11 +111,11 @@ const TestForm = () => {
               control={control}
               render={({ field }) => (
                 <Input
+                  {...field}
+                  onChange={(e) => field.onChange(Number(e.target.value))}
                   type="number"
                   placeholder="Enter duration in minutes"
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                  value={String(field.value)}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
                 />
               )}
             />
@@ -123,10 +127,11 @@ const TestForm = () => {
             <Controller
               name="thumbnail"
               control={control}
-              render={({ field }) => (
+              render={({ field: { onChange } }) => (
                 <Input
                   type="file"
-                  onChange={(e) => field.onChange(e.target.files)}
+                  onChange={(e) => onChange(e.target.files)}
+                  accept="image/*"
                   className="w-full rounded-md border border-gray-300 bg-white px-3 py-2"
                 />
               )}
@@ -142,6 +147,7 @@ const TestForm = () => {
               render={({ field }) => (
                 <select
                   {...field}
+                  value={field.value}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="live">Live</option>

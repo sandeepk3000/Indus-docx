@@ -3,7 +3,9 @@ import React from "react";
 interface InputProps {
   type: string;
   placeholder?: string;
-  value?: string;
+  accept?: string;
+  // add value for file type
+  value?: string | number;
   props?: React.HTMLAttributes<HTMLInputElement>;
   className?: string;
   leftIcon?: React.ReactNode;
@@ -13,7 +15,6 @@ interface InputProps {
 const Input = ({
   type,
   placeholder,
-  value,
   onChange,
   className,
   leftIcon,
@@ -29,9 +30,8 @@ const Input = ({
       )}
       <input
         type={type}
-        placeholder={placeholder}
-        value={value}
         onChange={onChange}
+        placeholder={placeholder}
         {...props}
         className={`w-full p-2 border focus:ring-2 outline-none focus:ring-blue-700 ${
           leftIcon ? "pl-10" : rightIcon ? "pr-10" : ""
