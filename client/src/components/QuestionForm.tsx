@@ -35,7 +35,13 @@ const TestForm = () => {
     questions: [],
   });
   const [edit, setEdit] = useState<boolean>(false);
-  const { control, handleSubmit, setValue, getValues } = useForm<IFormInput>({
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    getValues,
+    formState: { errors },
+  } = useForm<IFormInput>({
     defaultValues: {
       questionId: "2",
       title: "sdfsdf",
@@ -165,11 +171,15 @@ const TestForm = () => {
           <label className="text-sm font-medium">Question</label>
           <Controller
             name="title"
+            rules={{ required: "Question is required" }}
             control={control}
             render={({ field }) => (
               <Input type="text" {...field} placeholder="Enter question" />
             )}
           />
+          {errors.title && (
+            <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>
+          )}
         </div>
 
         {/* Options */}
@@ -180,6 +190,7 @@ const TestForm = () => {
               <Controller
                 name={`option${opt}` as keyof IFormInput}
                 control={control}
+                rules={{ required: `Option ${opt} is required` }}
                 render={({ field }) => (
                   <Input
                     type="text"
@@ -188,6 +199,11 @@ const TestForm = () => {
                   />
                 )}
               />
+              {errors[`option${opt}` as keyof IFormInput] && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors[`option${opt}` as keyof IFormInput]?.message}
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -199,6 +215,7 @@ const TestForm = () => {
             <Controller
               name="correctAnswer"
               control={control}
+              rules={{ required: "Correct answer is required" }}
               render={({ field }) => (
                 <Select
                   {...field}
@@ -207,17 +224,28 @@ const TestForm = () => {
                 />
               )}
             />
+            {errors.correctAnswer && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.correctAnswer.message}
+              </p>
+            )}
           </div>
 
           <div>
             <label className="text-sm font-medium">Marks</label>
             <Controller
               name="marks"
+              rules={{ required: "Marks is required" }}
               control={control}
               render={({ field }) => (
                 <Input {...field} type="number" placeholder="e.g. 1" />
               )}
             />
+            {errors.marks && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.marks.message}
+              </p>
+            )}
           </div>
         </div>
 

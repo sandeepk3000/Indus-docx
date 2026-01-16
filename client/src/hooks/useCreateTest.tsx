@@ -4,6 +4,7 @@ import { type TestFormValues } from "../components/TestForm";
 import { useState } from "react";
 interface CreateTestHookArg extends Omit<TestFormValues, "thumbnail"> {
   thumbnail: string;
+  userId: string;
 }
 const useCreateTest = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +22,9 @@ const useCreateTest = () => {
       });
       return response;
     } catch (err) {
+      // console.log(err.message);
       setError(err.message);
+      throw err;
     }
   };
   return { createTest, isLoading, error };

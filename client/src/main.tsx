@@ -33,11 +33,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/admin",
-        element: (
-          <AuthLayout authentication>
-            <Admin />
-          </AuthLayout>
-        ),
+        element: <Admin />,
       },
       {
         path: "/quiz",

@@ -12,46 +12,47 @@ export type TestFormValues = {
   description: string;
   duration: number;
   thumbnail: FileList | null;
-  status: "live" | "completed" | "upcoming";
-  access: "public" | "private";
+  status: "LIVE" | "COMPLETED" | "UPCOMING";
+  access: "PUBLIC" | "PRIVATE";
 };
-
-const TestForm = () => {
+interface TestFormProps {
+  onTestSubmit: (isTestCreated: boolean) => void;
+}
+const TestForm = ({ onTestSubmit }: TestFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { createTest } = useCreateTest();
   const { upload } = useUpload();
-  const { control, handleSubmit } = useForm<TestFormValues>({
-    defaultValues: {
-      title: "",
-      description: "",
-      duration: 60,
-      thumbnail: null,
-      status: "live",
-      access: "public",
-    },
-  });
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<TestFormValues>();
 
   const onSubmit = async (data: TestFormValues) => {
     setIsLoading(true);
     setError(null);
-    // console.log(JSON.stringify(data.thumbnail));
     try {
-      const thumbnail = data.thumbnail;
-      console.log(thumbnail?.[0].name);
+      const thumbnail = data.thumbnail?.[0];
       if (thumbnail) {
-        const thumbnailRes = await upload(thumbnail?.[0]);
-
+        const thumbnailRes = await upload(thumbnail);
+        console.log("thumbnailRes");
+        console.log(thumbnailRes);
         if (thumbnailRes) {
           const test = await createTest({
             ...data,
+            userId: "695e2dcc002e7344aebe",
             thumbnail: thumbnailRes.$id,
           });
+          console.log("test");
           console.log(test);
+          if (test) {
+            onTestSubmit(true);
+          }
         }
       }
     } catch (err) {
-      console.log(err);
+      console.log(err.message);
       setError(err.message);
     }
   };
@@ -67,6 +68,7 @@ const TestForm = () => {
             <label className="block text-sm font-medium mb-1">Title</label>
             <Controller
               name="title"
+              rules={{ required: "Title is required" }}
               control={control}
               render={({ field }) => (
                 <Input
@@ -78,6 +80,11 @@ const TestForm = () => {
                 />
               )}
             />
+            {errors.title && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.title.message}
+              </p>
+            )}
           </div>
 
           {/* Description */}
@@ -87,6 +94,7 @@ const TestForm = () => {
             </label>
             <Controller
               name="description"
+              rules={{ required: "Description is required" }}
               control={control}
               render={({ field }) => (
                 <TextArea
@@ -99,6 +107,11 @@ const TestForm = () => {
                 />
               )}
             />
+            {errors.description && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.description.message}
+              </p>
+            )}
           </div>
 
           {/* Duration */}
@@ -108,6 +121,7 @@ const TestForm = () => {
             </label>
             <Controller
               name="duration"
+              rules={{ required: "Duration is required" }}
               control={control}
               render={({ field }) => (
                 <Input
@@ -119,6 +133,11 @@ const TestForm = () => {
                 />
               )}
             />
+            {errors.duration && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.duration.message}
+              </p>
+            )}
           </div>
 
           {/* Thumbnail */}
@@ -126,6 +145,7 @@ const TestForm = () => {
             <label className="block text-sm font-medium mb-1">Thumbnail</label>
             <Controller
               name="thumbnail"
+              rules={{ required: "Thumbnail is required" }}
               control={control}
               render={({ field: { onChange } }) => (
                 <Input
@@ -136,6 +156,11 @@ const TestForm = () => {
                 />
               )}
             />
+            {errors.thumbnail && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.thumbnail.message}
+              </p>
+            )}
           </div>
 
           {/* Status */}
@@ -144,18 +169,25 @@ const TestForm = () => {
             <Controller
               name="status"
               control={control}
+              rules={{ required: "Status is required" }}
               render={({ field }) => (
                 <select
                   {...field}
                   value={field.value}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="live">Live</option>
-                  <option value="completed">Completed</option>
-                  <option value="upcoming">Upcoming</option>
+                  <option value="">Select status</option>
+                  <option value="LIVE">Live</option>
+                  <option value="COMPLETED">Completed</option>
+                  <option value="UPCOMING">Upcoming</option>
                 </select>
               )}
             />
+            {errors.status && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.status.message}
+              </p>
+            )}
           </div>
 
           {/* Access */}
@@ -163,29 +195,36 @@ const TestForm = () => {
             <label className="block text-sm font-medium mb-1">Access</label>
             <Controller
               name="access"
+              rules={{ required: "Access is required" }}
               control={control}
               render={({ field }) => (
                 <select
                   {...field}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="public">Public</option>
-                  <option value="private">Private</option>
+                  <option value="">Select access</option>
+                  <option value="PUBLIC">Public</option>
+                  <option value="PRIVATE">Private</option>
                 </select>
               )}
             />
+            {errors.access && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.access.message}
+              </p>
+            )}
           </div>
         </form>
       </div>
 
       {/* Fixed Bottom Button */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4">
-        <button
+        <Button
           onClick={handleSubmit(onSubmit)}
           className="w-full bg-blue-600 text-white py-3 rounded-md font-medium hover:bg-blue-700"
         >
           Continue
-        </button>
+        </Button>
       </div>
     </div>
   );

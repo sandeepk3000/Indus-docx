@@ -1,73 +1,173 @@
 import React from "react";
+import { useState, useEffect } from "react";
+import QuestionForm from "./QuestionForm";
 import Button from "./Button";
 import { useNavigate } from "react-router-dom";
+import useGetTest from "../hooks/useGetTest";
+import TestFrom from "./TestForm";
 interface TestProps {
   onAddTest?: () => void;
   onEditTest?: () => void;
 }
+interface Tab {
+  tabname: string;
+  breadcrumbs: string;
+  isActive: boolean;
+}
 const Tests = ({ onAddTest, onEditTest }: TestProps) => {
-  const navigate = useNavigate();
-  const tests = [
+  const { getTest } = useGetTest();
+  const [tests, setTests] = useState([]);
+  const fetchTest = async () => {
+    try {
+      const res = await getTest();
+      console.log(res);
+      console.log("rows", res);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  useEffect(() => {
+    fetchTest();
+  }, []);
+  const onTestSubmit = (isTestCreated: boolean) => {
+    if (isTestCreated) {
+      setTabs(
+        tabs.map((tab) =>
+          tab.tabname === "create"
+            ? { ...tab, breadcrumbs: "/question" }
+            : { ...tab },
+        ),
+      );
+    }
+  };
+  const [tabs, setTabs] = useState<Tab[]>([
     {
-      id: 1,
-      title: "Maths Mock Test",
-      questions: 50,
-      marks: 100,
-      duration: "60 min",
+      tabname: "home",
+      breadcrumbs: "",
+      isActive: true,
     },
-    {
-      id: 2,
-      title: "Physics Practice Test",
-      questions: 40,
-      marks: 80,
-      duration: "45 min",
-    },
-  ];
+  ]);
+  const handleTaps = (activeTab: string, path: string) => {
+    const isExistTap = tabs.find((tab) => tab.tabname === activeTab);
+    if (isExistTap) {
+      setTabs(
+        tabs.map((tab) =>
+          tab.tabname === activeTab
+            ? { ...tab, isActive: true }
+            : { ...tab, isActive: false },
+        ),
+      );
+    } else {
+      setTabs([
+        ...tabs.map((tab) => ({ ...tab, isActive: false })),
+        {
+          tabname: activeTab,
+          breadcrumbs: path,
+          isActive: true,
+        },
+      ]);
+    }
+  };
 
   return (
-    <div className="max-w-6xl mx-auto p-4 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-800">Tests</h2>
-        <Button
-          onClick={onAddTest}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+    <div className="max-w-4xl mx-auto p-4">
+      {/* Tabs Header */}
+      {JSON.stringify(tabs)}
+      <Button
+        className="w-full bg-blue-600 text-white py-3 rounded-md font-medium hover:bg-blue-700"
+        onClick={() => {}}
+      >
+        Back
+      </Button>
+      <div className="flex border-b border-gray-200">
+        <button
+          onClick={() => handleTaps("home", "")}
+          className={`px-4 py-2 text-sm font-medium transition
+            ${
+              tabs.find((tab) => tab.tabname === "home")?.isActive
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-gray-500 hover:text-blue-600"
+            }`}
         >
-          + Add Test
-        </Button>
+          Home
+        </button>
+
+        <button
+          onClick={() => handleTaps("create", "")}
+          className={`px-4 py-2 text-sm font-medium transition
+            ${
+              tabs.find((tab) => tab.tabname === "create")?.isActive
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-gray-500 hover:text-blue-600"
+            }`}
+        >
+          Create Test
+        </button>
       </div>
 
-      {/* Tests Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {tests.map((test) => (
-          <div
-            key={test.id}
-            className="border border-gray-200 rounded-lg p-4 shadow-sm bg-white"
-          >
-            {/* Title */}
-            <h3 className="text-lg font-medium text-gray-800">{test.title}</h3>
-
-            {/* Info */}
-            <div className="mt-2 text-sm text-gray-600 space-y-1">
-              <p>Questions: {test.questions}</p>
-              <p>Total Marks: {test.marks}</p>
-              <p>Duration: {test.duration}</p>
-            </div>
-
-            {/* Actions */}
-            <div className="mt-4 flex gap-2">
-              <button className="flex-1 px-3 py-2 text-sm border rounded-md hover:bg-gray-100">
-                View
-              </button>
-              <button className="flex-1 px-3 py-2 text-sm border border-blue-500 text-blue-600 rounded-md hover:bg-blue-50">
-                Edit
-              </button>
-              <button className="flex-1 px-3 py-2 text-sm border border-red-500 text-red-600 rounded-md hover:bg-red-50">
-                Delete
-              </button>
-            </div>
+      {/* Tab Content */}
+      <div className="mt-6">
+        {tabs.find((tab) => tab.tabname === "home")?.isActive && (
+          <div>
+            <h2 className="text-lg font-semibold mb-2">All Tests</h2>
+            <p className="text-gray-600">
+              List of available tests will appear here.
+            </p>
           </div>
-        ))}
+        )}
+
+        {tabs.find((tab) => tab.tabname === "create")?.isActive &&
+        !tabs
+          .find((tab) => tab.tabname === "create")
+          ?.breadcrumbs.includes("/question") ? (
+          <TestFrom onTestSubmit={onTestSubmit} />
+        ) : (
+          // <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition">
+          //   {/* Image */}
+          //   <div className="h-40 w-full overflow-hidden rounded-t-2xl">
+          //     <img
+          //       src={image}
+          //       alt={title}
+          //       className="h-full w-full object-cover"
+          //     />
+          //   </div>
+
+          //   {/* Content */}
+          //   <div className="p-4 space-y-3">
+          //     <h3 className="text-lg font-semibold text-gray-800 line-clamp-1">
+          //       {title}
+          //     </h3>
+
+          //     <p className="text-sm text-gray-600 line-clamp-2">
+          //       {description}
+          //     </p>
+
+          //     {/* Meta info */}
+          //     <div className="flex items-center justify-between text-sm text-gray-700">
+          //       <span>📝 {totalQuestions} Questions</span>
+          //       <span>⏱ {duration} min</span>
+          //     </div>
+
+          //     {/* Actions */}
+          //     <div className="flex gap-2 pt-2">
+          //       <button
+          //         onClick={onEdit}
+          //         className="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          //       >
+          //         Edit
+          //       </button>
+
+          //       <button
+          //         onClick={onDelete}
+          //         className="flex-1 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+          //       >
+          //         Delete
+          //       </button>
+          //     </div>
+          //   </div>
+          // </div>
+          ""
+        )}
       </div>
     </div>
   );
