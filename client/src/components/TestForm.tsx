@@ -8,7 +8,7 @@ import useTest from "../hooks/useTest";
 import useMedia from "../hooks/useMedia";
 import { type Models } from "appwrite";
 
-export type TestFormValues = {
+export interface TestFormValues {
   title: string;
   description: string;
   duration: number;
@@ -16,7 +16,7 @@ export type TestFormValues = {
   status: "LIVE" | "COMPLETED" | "UPCOMING";
   access: "PUBLIC" | "PRIVATE";
   slug: string;
-};
+}
 interface TestFormProps {
   test?: Partial<Models.Row> | undefined;
   onTestSubmit: (isTestCreated: boolean) => void;

@@ -6,8 +6,10 @@ import Button from "./Button";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import useTest from "../hooks/useTest";
 import { type Models } from "appwrite";
+import { type TestFormValues } from "./TestForm";
+import useQuestion from "../hooks/useQuestion";
 export interface IFormInput {
-  questionId: string;
+  $id: string;
   title: string;
   optionA: string;
   optionB: string;
@@ -21,14 +23,17 @@ interface IFormInputAction<T> {
   type: "add" | "edit";
 }
 interface QuestionFormProps {
-  test?: Partial<Models.Row> | undefined;
+  test: Models.Row | null;
+  onQuestionSubmit: (isQuestionSubmit: boolean) => void;
 }
-const QuestionForm = ({ test }: QuestionFormProps) => {
+
+const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
   //if test is already in local storage then set it to test state  for ts
-  const id = useId();
+  const { getQuestions, createQuestion, updateQuestion} = useQuestion();
   const isFirstRender = useRef(true);
   const { updateTest } = useTest();
-  const [questions, setQuestions] = useState<IFormInput[]>([]);
+  const [questions, setQuestions] = useState<Models.Row[] | null>(null);
+  const [question, setQuestion] = useState<IFormInput | null>(null);
   const [edit, setEdit] = useState<boolean>(false);
   const {
     control,
@@ -38,8 +43,8 @@ const QuestionForm = ({ test }: QuestionFormProps) => {
     formState: { errors },
   } = useForm<IFormInput>({
     defaultValues: {
-      questionId: "2",
-      title: "sdfsdf",
+      $id: "",
+      title: "",
       optionA: "",
       optionB: "",
       optionC: "",
@@ -48,33 +53,20 @@ const QuestionForm = ({ test }: QuestionFormProps) => {
       marks: "0",
     },
   });
-  const onQuestionSubmit: SubmitHandler<IFormInputAction<IFormInput>> = (
-    action,
-  ) => {
+  const onQuestionFormSubmit: SubmitHandler<
+    IFormInputAction<IFormInput>
+  > = async (action) => {
     if (action.type === "add") {
-      setQuestions([...questions, action.payload]);
+      setQuestion(action.payload);
     } else {
-      const question = questions.find(
-        (question) => question.questionId === action.payload.questionId,
-      );
-      if (question) {
-        setQuestions(
-          questions.map((question) =>
-            question.questionId === action.payload.questionId
-              ? action.payload
-              : question,
-          ),
-        );
-      }
+      setQuestion(action.payload);
     }
   };
-  const editQuestion = (questionId: string) => {
+  const editQuestion = ($id: string) => {
     setEdit(true);
-    const question = questions.find(
-      (question) => question.questionId === questionId,
-    );
+    const question = questions.find((question) => question.$id === $id);
     if (question) {
-      setValue("questionId", question.questionId);
+      setValue("$id", question.$id);
       setValue("title", question.title);
       setValue("optionA", question.optionA);
       setValue("optionB", question.optionB);
@@ -90,52 +82,48 @@ const QuestionForm = ({ test }: QuestionFormProps) => {
       isFirstRender.current = false;
       return;
     }
-    if (test && questions.length >= 0) {
-      const newTest = {
-        ...test,
-        questions: questions,
-      };
-      storeTestInLocal(newTest);
-      if (!test.$id) return;
-      const localTest: Models.Row | null = getTestFromLocal(test.$id);
-      if (localTest) {
-        const questions = localTest.questions;
-        updateTest({});
-        setTest(localTest);
-        setValue("questionId", "");
-        setValue("title", "");
-        setValue("optionA", "");
-        setValue("optionB", "");
-        setValue("optionC", "");
-        setValue("optionD", "");
-        setValue("correctAnswer", "");
-        setValue("marks", "");
-        setEdit(false);
-      }
+    if (question) {
+      createQuestion({
+        $id: question.$id,
+        title: question.title,
+        optionA: question.optionA,
+        optionB: question.optionB,
+        optionC: question.optionC,
+        optionD: question.optionD,
+        correctAnswer: question.correctAnswer,
+        marks: question.marks,
+        testId: test?.$id || "",
+      }).then(async (res) => {
+        await updateTest({
+          slug: test?.$id || "",
+          questions: [...test?.questions, res.$id],
+        });
+        onQuestionSubmit(true);
+      });
     }
-  }, [questions, setQuestions]);
+    setValue("$id", "");
+    setValue("title", "");
+    setValue("optionA", "");
+    setValue("optionB", "");
+    setValue("optionC", "");
+    setValue("optionD", "");
+    setValue("correctAnswer", "");
+    setValue("marks", "");
+    setEdit(false);
+  }, [question, setQuestion]);
 
   useEffect(() => {
-    // localStorage.removeItem("2");
-   if(test && test.$id){
-      const localTest: Models.Row | null = getTestFromLocal(test.$id);
-      if (localTest){
-        setQuestions(localTest.questions);
+    if (test) {
+      console.log("helkdkkkkk", test);
+      if (test.questions.length > 0) {
+        getQuestions(test.$id).then((res) => {
+          console.log(res.rows);
+          setQuestions(res.rows);
+        });
       }
-   }
-  }, []);
-  const storeTestInLocal = (test: Test): void => {
-    localStorage.setItem(test.testId, JSON.stringify(test));
-  };
-  const getTestFromLocal = (testId: string): Test | null => {
-    const localTestString = localStorage.getItem(testId);
-
-    if (localTestString) {
-      const localTest: Test = JSON.parse(localTestString);
-      return localTest;
     }
-    return null;
-  };
+  }, [test]);
+
   return (
     <>
       {/* Header */}
@@ -154,10 +142,10 @@ const QuestionForm = ({ test }: QuestionFormProps) => {
       {/* FORM CARD */}
       <form
         onSubmit={handleSubmit((data) =>
-          onQuestionSubmit({
+          onQuestionFormSubmit({
             payload: {
               ...data,
-              questionId: edit ? getValues("questionId") : uuid(),
+              $id: edit ? data.$id : uuid(),
             },
             type: edit ? "edit" : "add",
           }),
@@ -259,16 +247,16 @@ const QuestionForm = ({ test }: QuestionFormProps) => {
       </form>
 
       {/* QUESTIONS LIST */}
-      {test && test?.questions?.length > 0 && (
+      {questions && questions.length > 0 && (
         <div className="mt-10">
           <h2 className="text-lg font-semibold mb-4">
-            Questions ({test.questions.length})
+            Questions ({questions.length})
           </h2>
 
           <div className="grid sm:grid-cols-2 place-items-center lg:grid-cols-3 gap-5">
-            {test.questions.map((q, index) => (
+            {questions.map((q, index) => (
               <div
-                key={q.questionId}
+                key={q.$id}
                 className="bg-white rounded-lg shadow p-4 relative"
               >
                 {/* Edit */}
@@ -276,7 +264,7 @@ const QuestionForm = ({ test }: QuestionFormProps) => {
                   className="absolute top-2 right-2 bg-amber-500 text-white px-3 py-1.5 rounded-md text-sm font-medium
                     hover:bg-amber-600 transition
                     focus:outline-none focus:ring-2 focus:ring-amber-400"
-                  onClick={() => editQuestion(q.questionId)}
+                  onClick={() => editQuestion(q.$id)}
                 >
                   Edit
                 </Button>

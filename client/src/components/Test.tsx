@@ -154,7 +154,7 @@ const Tests = ({ onAddTest, onEditTest }: TestProps) => {
 
                 {/* Meta info */}
                 <div className="flex items-center justify-between text-sm text-gray-700">
-                  <span>📝 {0} Questions</span>
+                  <span>📝 {test.questions.length} Questions</span>
                   <span>⏱ {test.duration} min</span>
                 </div>
 

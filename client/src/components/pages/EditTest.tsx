@@ -15,6 +15,14 @@ const EditTest = () => {
       }
     }
   };
+  const onQuestionSubmit = async (isQuestionSubmit: boolean) => {
+    if (isQuestionSubmit) {
+      if (id) {
+        alert("question added");
+        await fetchTest(id);
+      }
+    }
+  };
   const { getSingleTest } = useTest();
   const [test, setTest] = useState<Models.Row | null>(null);
   const fetchTest = async (id: string) => {
@@ -39,7 +47,7 @@ const EditTest = () => {
     <div>
       <h1>Edit Test</h1>
       {test && <TestForm test={test} onTestSubmit={onTestSubmit} />}
-      <QuestionForm />
+      {test && <QuestionForm onQuestionSubmit={onQuestionSubmit} test={test} />}
     </div>
   );
 };

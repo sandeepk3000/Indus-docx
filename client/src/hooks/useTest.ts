@@ -1,10 +1,16 @@
 import client from "../lib/appwrite";
 import { TablesDB, ID } from "appwrite";
 import { type TestFormValues } from "../components/TestForm";
+import { type IFormInput } from "../components/QuestionForm";
 interface CreateTestHookArg extends Omit<TestFormValues, "thumbnail"> {
   thumbnail: string;
   userId: string;
 }
+interface UpdateTestHookArg extends Partial<CreateTestHookArg> {
+  slug: string;
+  questions?: string[];
+}
+
 const useTest = () => {
   const database = new TablesDB(client);
   const getTest = async () => {
@@ -59,7 +65,7 @@ const useTest = () => {
       throw err;
     }
   };
-  const updateTest = async (test: CreateTestHookArg) => {
+  const updateTest = async (test: UpdateTestHookArg) => {
     try {
       console.log("updateTest-------");
       console.log(test);
