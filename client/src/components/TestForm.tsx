@@ -4,8 +4,9 @@ import TextArea from "./TextArea";
 import Button from "./Button";
 
 import { useState } from "react";
-import useCreateTest from "../hooks/useCreateTest";
-import useUpload from "../hooks/useUpload";
+import useTest from "../hooks/useTest";
+import useMedia from "../hooks/useMedia";
+import { type Models } from "appwrite";
 
 export type TestFormValues = {
   title: string;
@@ -14,40 +15,72 @@ export type TestFormValues = {
   thumbnail: FileList | null;
   status: "LIVE" | "COMPLETED" | "UPCOMING";
   access: "PUBLIC" | "PRIVATE";
+  slug: string;
 };
 interface TestFormProps {
+  test?: Partial<Models.Row> | undefined;
   onTestSubmit: (isTestCreated: boolean) => void;
 }
-const TestForm = ({ onTestSubmit }: TestFormProps) => {
+const TestForm = ({ onTestSubmit, test }: TestFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { createTest } = useCreateTest();
-  const { upload } = useUpload();
+  const { createTest, updateTest } = useTest();
+  const { upload, deleteFile, getFileView } = useMedia();
   const {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<TestFormValues>();
+    register,
+  } = useForm<TestFormValues>({
+    defaultValues: {
+      title: test?.title || "",
+      description: test?.description || "",
+      duration: test?.duration || 0,
+      thumbnail: null,
+      status: test?.status || "LIVE",
+      access: test?.access || "PUBLIC",
+      slug: test?.$id || "",
+    },
+  });
 
   const onSubmit = async (data: TestFormValues) => {
     setIsLoading(true);
     setError(null);
     try {
-      const thumbnail = data.thumbnail?.[0];
-      if (thumbnail) {
-        const thumbnailRes = await upload(thumbnail);
-        console.log("thumbnailRes");
-        console.log(thumbnailRes);
-        if (thumbnailRes) {
-          const test = await createTest({
-            ...data,
-            userId: "695e2dcc002e7344aebe",
-            thumbnail: thumbnailRes.$id,
-          });
-          console.log("test");
-          console.log(test);
-          if (test) {
-            onTestSubmit(true);
+      if (test) {
+        console.log("update test");
+        const thumbnail = data.thumbnail?.[0]
+          ? await upload(data.thumbnail[0])
+          : null;
+        console.log(thumbnail);
+        if (thumbnail) {
+          console.log("available thum", test.thumbnail);
+          await deleteFile(test.thumbnail);
+        }
+        const updatedTest = await updateTest({
+          ...data,
+          userId: "695e2dcc002e7344aebe",
+          thumbnail: thumbnail?.$id || test.thumbnail,
+        });
+        if (updatedTest) {
+          alert("test updated");
+          onTestSubmit(true);
+        }
+      } else {
+        const thumbnail = data.thumbnail?.[0];
+        if (thumbnail) {
+          const thumbnailRes = await upload(thumbnail);
+          if (thumbnailRes) {
+            const test = await createTest({
+              ...data,
+              userId: "695e2dcc002e7344aebe",
+              thumbnail: thumbnailRes.$id,
+            });
+            console.log("test");
+            console.log(test);
+            if (test) {
+              onTestSubmit(true);
+            }
           }
         }
       }
@@ -63,7 +96,27 @@ const TestForm = ({ onTestSubmit }: TestFormProps) => {
         <h2 className="text-xl font-semibold mb-4">Create Test</h2>
 
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-          {/* Title */}
+          {/* Title  */}
+          {/*add slug   */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Slug</label>
+
+            <Controller
+              name="slug"
+              rules={{ required: "Slug is required" }}
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="text"
+                  {...field}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  placeholder="Enter test slug"
+                  className="appearance-none block w-full bg-gray-200 text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
+                />
+              )}
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-1">Title</label>
             <Controller
@@ -101,7 +154,6 @@ const TestForm = ({ onTestSubmit }: TestFormProps) => {
                   {...field}
                   onChange={(e) => field.onChange(e.target.value)}
                   rows={4}
-                  value={field.value}
                   placeholder="Enter test description"
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500"
                 />
@@ -145,7 +197,6 @@ const TestForm = ({ onTestSubmit }: TestFormProps) => {
             <label className="block text-sm font-medium mb-1">Thumbnail</label>
             <Controller
               name="thumbnail"
-              rules={{ required: "Thumbnail is required" }}
               control={control}
               render={({ field: { onChange } }) => (
                 <Input
@@ -156,6 +207,13 @@ const TestForm = ({ onTestSubmit }: TestFormProps) => {
                 />
               )}
             />
+            {test && (
+              <img
+                src={getFileView(test.thumbnail)}
+                alt="Thumbnail"
+                className="mt-2 h-20 w-20 object-cover rounded"
+              />
+            )}
             {errors.thumbnail && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.thumbnail.message}
@@ -173,7 +231,6 @@ const TestForm = ({ onTestSubmit }: TestFormProps) => {
               render={({ field }) => (
                 <select
                   {...field}
-                  value={field.value}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select status</option>
@@ -223,7 +280,7 @@ const TestForm = ({ onTestSubmit }: TestFormProps) => {
           onClick={handleSubmit(onSubmit)}
           className="w-full bg-blue-600 text-white py-3 rounded-md font-medium hover:bg-blue-700"
         >
-          Continue
+          {test ? "Update Test" : "Create Test"}
         </Button>
       </div>
     </div>

@@ -3,8 +3,10 @@ import { useState, useEffect } from "react";
 import QuestionForm from "./QuestionForm";
 import Button from "./Button";
 import { useNavigate } from "react-router-dom";
-import useGetTest from "../hooks/useGetTest";
+import useTest from "../hooks/useTest";
 import TestFrom from "./TestForm";
+import { type Models } from "appwrite";
+import useMedia from "../hooks/useMedia";
 interface TestProps {
   onAddTest?: () => void;
   onEditTest?: () => void;
@@ -14,16 +16,21 @@ interface Tab {
   breadcrumbs: string;
   isActive: boolean;
 }
+
 const Tests = ({ onAddTest, onEditTest }: TestProps) => {
-  const { getTest } = useGetTest();
-  const [tests, setTests] = useState([]);
+  const { getTest } = useTest();
+  const { getFileView } = useMedia();
+  const navigate = useNavigate();
+  const [tests, setTests] = useState<Models.Row[]>([]);
   const fetchTest = async () => {
     try {
       const res = await getTest();
-      console.log(res);
-      console.log("rows", res);
+      if (res) {
+        setTests(res.rows);
+      }
     } catch (err) {
-      console.log(err);
+      console.log("error");
+      // console.log(err);
     }
   };
   useEffect(() => {
@@ -122,51 +129,51 @@ const Tests = ({ onAddTest, onEditTest }: TestProps) => {
           ?.breadcrumbs.includes("/question") ? (
           <TestFrom onTestSubmit={onTestSubmit} />
         ) : (
-          // <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition">
-          //   {/* Image */}
-          //   <div className="h-40 w-full overflow-hidden rounded-t-2xl">
-          //     <img
-          //       src={image}
-          //       alt={title}
-          //       className="h-full w-full object-cover"
-          //     />
-          //   </div>
+          tests &&
+          tests.map((test) => (
+            <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition">
+              {/* Image */}
+              <div className="h-40 w-full overflow-hidden rounded-t-2xl">
+                <img
+                  src={getFileView(test.thumbnail)}
+                  alt={test.title}
+                  className="h-full w-full object-cover"
+                />
+              </div>
 
-          //   {/* Content */}
-          //   <div className="p-4 space-y-3">
-          //     <h3 className="text-lg font-semibold text-gray-800 line-clamp-1">
-          //       {title}
-          //     </h3>
+              {/* Content */}
+              <span>{test.thumbnail}</span>
+              <div className="p-4 space-y-3">
+                <h3 className="text-lg font-semibold text-gray-800 line-clamp-1">
+                  {test.title}
+                </h3>
 
-          //     <p className="text-sm text-gray-600 line-clamp-2">
-          //       {description}
-          //     </p>
+                <p className="text-sm text-gray-600 line-clamp-2">
+                  {test.description}
+                </p>
 
-          //     {/* Meta info */}
-          //     <div className="flex items-center justify-between text-sm text-gray-700">
-          //       <span>📝 {totalQuestions} Questions</span>
-          //       <span>⏱ {duration} min</span>
-          //     </div>
+                {/* Meta info */}
+                <div className="flex items-center justify-between text-sm text-gray-700">
+                  <span>📝 {0} Questions</span>
+                  <span>⏱ {test.duration} min</span>
+                </div>
 
-          //     {/* Actions */}
-          //     <div className="flex gap-2 pt-2">
-          //       <button
-          //         onClick={onEdit}
-          //         className="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          //       >
-          //         Edit
-          //       </button>
+                {/* Actions */}
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    className="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    onClick={() => navigate(`/admin/tests/${test.$id}/edit`)}
+                  >
+                    Edit
+                  </Button>
 
-          //       <button
-          //         onClick={onDelete}
-          //         className="flex-1 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-          //       >
-          //         Delete
-          //       </button>
-          //     </div>
-          //   </div>
-          // </div>
-          ""
+                  <button className="flex-1 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
         )}
       </div>
     </div>

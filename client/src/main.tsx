@@ -14,6 +14,7 @@ import { Auth0Provider } from "@auth0/auth0-react";
 import AuthLayout from "./components/AuthLayout.tsx";
 import Callback from "./components/pages/Callback.tsx";
 import { Navigate } from "react-router-dom";
+import EditTest from "./components/pages/EditTest.tsx";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -58,6 +59,10 @@ const router = createBrowserRouter([
       {
         path: "/callback",
         element: <Callback />,
+      },
+      {
+        path: "/admin/tests/:id/edit",
+        element: <EditTest />,
       },
     ],
   },

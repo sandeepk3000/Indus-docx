@@ -6,7 +6,6 @@ interface InputProps {
   accept?: string;
   // add value for file type
   value?: string | number;
-  props?: React.HTMLAttributes<HTMLInputElement>;
   className?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
@@ -15,11 +14,10 @@ interface InputProps {
 const Input = ({
   type,
   placeholder,
-  onChange,
   className,
   leftIcon,
-  props,
   rightIcon,
+  ...props
 }: InputProps) => {
   return (
     <div className={`relative ${className}`}>
@@ -30,7 +28,6 @@ const Input = ({
       )}
       <input
         type={type}
-        onChange={onChange}
         placeholder={placeholder}
         {...props}
         className={`w-full p-2 border focus:ring-2 outline-none focus:ring-blue-700 ${
