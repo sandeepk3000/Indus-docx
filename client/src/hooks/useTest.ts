@@ -49,7 +49,7 @@ const useTest = () => {
           status: test.status,
 
           access: test.access,
-          userId:test.userId
+          userId: test.userId,
         },
       });
       return response;
@@ -63,18 +63,12 @@ const useTest = () => {
     try {
       console.log("updateTest-------");
       console.log(test);
+      const { slug, ...other } = test;
       const response = await database.updateRow({
         databaseId: "695e2dcc002e7344aebe",
         tableId: "test",
-        rowId: test.slug,
-        data: {
-          title: test.title,
-          description: test.description,
-          duration: test.duration,
-          thumbnail: test.thumbnail,
-          status: test.status,
-          access: test.access,
-        },
+        rowId: slug,
+        data: other,
       });
       return response;
     } catch (err) {

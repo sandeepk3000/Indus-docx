@@ -4,6 +4,8 @@ import { useEffect, useState, useId, useRef } from "react";
 import { v4 as uuid } from "uuid";
 import Button from "./Button";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
+import useTest from "../hooks/useTest";
+import { type Models } from "appwrite";
 export interface IFormInput {
   questionId: string;
   title: string;
@@ -18,22 +20,15 @@ interface IFormInputAction<T> {
   payload: T;
   type: "add" | "edit";
 }
-
-export interface Test {
-  testId: string;
-  title: string;
-  questions: IFormInput[];
+interface QuestionFormProps {
+  test?: Partial<Models.Row> | undefined;
 }
-const TestForm = () => {
+const QuestionForm = ({ test }: QuestionFormProps) => {
   //if test is already in local storage then set it to test state  for ts
   const id = useId();
   const isFirstRender = useRef(true);
+  const { updateTest } = useTest();
   const [questions, setQuestions] = useState<IFormInput[]>([]);
-  const [test, setTest] = useState<Test | null>({
-    testId: "2",
-    title: "test",
-    questions: [],
-  });
   const [edit, setEdit] = useState<boolean>(false);
   const {
     control,
@@ -101,10 +96,12 @@ const TestForm = () => {
         questions: questions,
       };
       storeTestInLocal(newTest);
-      const localTest: Test | null = getTestFromLocal(test.testId);
+      if (!test.$id) return;
+      const localTest: Models.Row | null = getTestFromLocal(test.$id);
       if (localTest) {
+        const questions = localTest.questions;
+        updateTest({});
         setTest(localTest);
-
         setValue("questionId", "");
         setValue("title", "");
         setValue("optionA", "");
@@ -120,11 +117,12 @@ const TestForm = () => {
 
   useEffect(() => {
     // localStorage.removeItem("2");
-    const localTest: Test | null = getTestFromLocal("2");
-    if (localTest) {
-      setQuestions(localTest.questions);
-      setTest(localTest);
-    }
+   if(test && test.$id){
+      const localTest: Models.Row | null = getTestFromLocal(test.$id);
+      if (localTest){
+        setQuestions(localTest.questions);
+      }
+   }
   }, []);
   const storeTestInLocal = (test: Test): void => {
     localStorage.setItem(test.testId, JSON.stringify(test));
@@ -254,6 +252,7 @@ const TestForm = () => {
           className="w-full bg-blue-600 text-white px-5 py-3 rounded-md font-medium
            hover:bg-blue-700 transition
            focus:outline-none focus:ring-2 focus:ring-blue-500"
+          type="submit"
         >
           {edit ? "Update Question" : "Add Question"}
         </Button>
@@ -318,4 +317,4 @@ const TestForm = () => {
   );
 };
 
-export default TestForm;
+export default QuestionForm;
