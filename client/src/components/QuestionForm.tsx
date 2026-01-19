@@ -269,7 +269,7 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
               >
                 {/* Edit */}
                 <Button
-                  className="absolute top-2 right-2 bg-amber-500 text-white px-3 py-1.5 rounded-md text-sm font-medium
+                  className="absolute top-2 right-2 bg-primary text-white px-3 py-1.5 rounded-md text-sm font-medium
                     hover:bg-amber-600 transition
                     focus:outline-none focus:ring-2 focus:ring-amber-400"
                   onClick={() => editQuestion(q.$id)}
