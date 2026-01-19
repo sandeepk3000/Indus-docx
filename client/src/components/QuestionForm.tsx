@@ -178,7 +178,7 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
 
         {/* Options */}
         <div className="grid sm:grid-cols-2 gap-4">
-          {["A", "B", "C", "D"].map((opt, i) => (
+          {["A", "B", "C", "D"].map((opt) => (
             <div key={opt}>
               <label className="text-sm font-medium">Option {opt}</label>
               <Controller
