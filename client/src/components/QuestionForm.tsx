@@ -4,26 +4,20 @@ import { useEffect, useState, useRef } from "react";
 import { v4 as uuid } from "uuid";
 import Button from "./Button";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
-import useTest from "../hooks/useTest";
-import { type Models } from "appwrite";
 // import { type TestFormValues } from "./TestForm";
 import useQuestion from "../hooks/useQuestion";
-export interface IFormInput {
-  $id: string;
-  title: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  correctAnswer: string;
-  marks: string;
-}
+import type {
+  TestDoc,
+  QuestionDoc,
+  Question,
+  QuestionOptions,
+} from "../../types";
 interface IFormInputAction<T> {
   payload: T;
   type: "add" | "edit";
 }
 interface QuestionFormProps {
-  test: Models.Row | null;
+  test: TestDoc | null;
   onQuestionSubmit: (isQuestionSubmit: boolean) => void;
 }
 
@@ -31,15 +25,15 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
   //if test is already in local storage then set it to test state  for ts
   const { getQuestions, createQuestion, updateQuestion } = useQuestion();
   const isFirstRender = useRef(true);
-  const [questions, setQuestions] = useState<Models.Row[] | null>(null);
-  const [question, setQuestion] = useState<IFormInput | null>(null);
+  const [questions, setQuestions] = useState<QuestionDoc[] | null>(null);
+  const [question, setQuestion] = useState<QuestionDoc | null>(null);
   const [edit, setEdit] = useState<boolean>(false);
   const {
     control,
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm<IFormInput>({
+  } = useForm<Question>({
     defaultValues: {
       $id: "",
       title: "",
@@ -49,10 +43,11 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
       optionD: "",
       correctAnswer: "",
       marks: "0",
+      tests: test ? [test.$id] : [],
     },
   });
   const onQuestionFormSubmit: SubmitHandler<
-    IFormInputAction<IFormInput>
+    IFormInputAction<Question>
   > = async (action) => {
     if (action.type === "add") {
       createQuestion({
@@ -72,7 +67,7 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
       const findUpdateQuestion = questions?.find(
         (question) => question.$id === action.payload.$id,
       );
-
+      if (!test) return;
       if (findUpdateQuestion) {
         const isTestIdExist = findUpdateQuestion.tests.includes(test?.$id);
         updateQuestion({
@@ -131,7 +126,6 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
       console.log("helkdkkkkk", test);
       if (test) {
         getQuestions([test.$id]).then((res) => {
-          console.log(res.rows);
           setQuestions(res.rows);
         });
       }
@@ -184,11 +178,11 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
 
         {/* Options */}
         <div className="grid sm:grid-cols-2 gap-4">
-          {["A", "B", "C", "D"].map((opt) => (
+          {["A", "B", "C", "D"].map((opt, i) => (
             <div key={opt}>
               <label className="text-sm font-medium">Option {opt}</label>
               <Controller
-                name={`option${opt}` as keyof IFormInput}
+                name={`option${opt}` as keyof QuestionOptions}
                 control={control}
                 rules={{ required: `Option ${opt} is required` }}
                 render={({ field }) => (
@@ -199,9 +193,9 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
                   />
                 )}
               />
-              {errors[`option${opt}` as keyof IFormInput] && (
+              {errors[`option${opt}` as keyof Question] && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors[`option${opt}` as keyof IFormInput]?.message}
+                  {errors[`option${opt}` as keyof Question]?.message}
                 </p>
               )}
             </div>
@@ -300,7 +294,7 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
                       <span>
                         {opt}
                         {" " + ""}
-                        {q[`option${opt}` as keyof typeof q].trim()}
+                        {q[`option${opt}` as keyof typeof q]}
                       </span>
                     </div>
                   ))}

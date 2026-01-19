@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Leaderboard from "../Leaderboard";
 import LiveExamPanel from "../LiveExamPanel";
@@ -6,9 +5,8 @@ import Test from "../Test";
 
 // import { useAuth0 } from "@auth0/auth0-react";
 const Admin = () => {
-
   const [activeTab, setActiveTab] = useState("Live");
-  const [breadcrumbs, setBreadcrumbs] = useState<string[]>([]);
+  // const [breadcrumbs, setBreadcrumbs] = useState<string[]>([]);
   const tabs = ["Live", "Tests", "Leaderboard", "Students"];
   const students = [
     {
@@ -52,7 +50,6 @@ const Admin = () => {
     <div className="max-w-5xl mx-auto mt-6">
       {/* Tabs Header */}
 
-
       <div className="flex border-b border-gray-300">
         {tabs.map((tab) => (
           <button
@@ -73,11 +70,9 @@ const Admin = () => {
       {/* Tab Content */}
       <div className="mt-6">
         {activeTab === "Live" && <LiveExamPanel />}
-        {activeTab === "Tests" && (
-          <Test onAddTest={() => setBreadcrumbs([activeTab, "AddTest"])} />
-        )}
+        {activeTab === "Tests" && <Test />}
         {activeTab === "Leaderboard" && <Leaderboard students={students} />}
-        {breadcrumbs.includes("AddTest") && <div>add test </div>}
+        {/* {breadcrumbs.includes("AddTest") && <div>add test </div>} */}
       </div>
     </div>
   );

@@ -1,19 +1,15 @@
-import { useState } from "react";
-import { TablesDB, ID, Query } from "appwrite";
+import { TablesDB, Query } from "appwrite";
 import client from "../lib/appwrite";
-import { type IFormInput } from "../components/QuestionForm";
-interface CreateQuestionHookArg extends IFormInput {
-  tests: string[];
-}
-interface UpdateQuestionHookArg extends IFormInput {
-  tests: string[];
-}
+import { type Question } from "../../types";
+import { type Models } from "appwrite";
+import type { QuestionDoc } from "../../types";
+
 const useQuestion = () => {
   const database = new TablesDB(client);
-  const createQuestion = async (question: CreateQuestionHookArg) => {
+  const createQuestion = async (question: Question): Promise<QuestionDoc> => {
     try {
       const { $id, ...other } = question;
-      const response = await database.createRow({
+      const response = await database.createRow<QuestionDoc>({
         databaseId: "695e2dcc002e7344aebe",
         tableId: "question",
         rowId: $id,
@@ -24,10 +20,10 @@ const useQuestion = () => {
       throw err;
     }
   };
-  const updateQuestion = async (question: UpdateQuestionHookArg) => {
+  const updateQuestion = async (question: Question): Promise<QuestionDoc> => {
     try {
       const { $id, ...other } = question;
-      const response = await database.updateRow({
+      const response = await database.updateRow<QuestionDoc>({
         databaseId: "695e2dcc002e7344aebe",
         tableId: "question",
         rowId: question.$id,
@@ -38,9 +34,11 @@ const useQuestion = () => {
       throw err;
     }
   };
-  const getQuestions = async (tests: string[]) => {
+  const getQuestions = async (
+    tests: string[],
+  ): Promise<Models.RowList<QuestionDoc>> => {
     try {
-      const response = await database.listRows({
+      const response = await database.listRows<QuestionDoc>({
         databaseId: "695e2dcc002e7344aebe",
         tableId: "question",
         queries: [Query.equal("tests", tests)],

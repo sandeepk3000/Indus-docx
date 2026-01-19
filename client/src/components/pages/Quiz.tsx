@@ -1,43 +1,33 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Button from "../Button";
-import { type Models } from "appwrite";
+import { ID } from "appwrite";
 import Typo from "../Typo";
 import Timer from "../Timer";
 import Leaderboard from "../Leaderboard";
 import useQuestion from "../../hooks/useQuestion";
 import useResult from "../../hooks/useResult";
+import type { QuestionDoc, TestDoc, ResultDoc, Result } from "../../../types";
 
 interface YourAnswer {
   questionId: string;
   answer: string;
 }
-interface CheckedAnswer extends Omit<Models.Row, "marks"> {
+interface CheckedAnswer extends Omit<QuestionDoc, "marks"> {
   isCorrect: boolean;
   answer: string;
 }
-export interface Result {
-  studentId: string;
-  testId: string;
-  checkedAnswers: CheckedAnswer[];
-  totalMarks: number;
-  totalCorrect: number;
-  totalWrong: number;
-  totalSkipped: number;
-  rank?: number;
 
-  obtainedMarks: number;
-}
 interface QuizProps {
-  test: Models.Row | null;
+  test: TestDoc | null;
 }
 const Quiz = ({ test }: QuizProps) => {
   // const navigate = useNavigate();
   const { getQuestions } = useQuestion();
   const { createResult, getResults } = useResult();
-  const [questions, setQuestions] = useState<Models.Row[] | null>(null);
+  const [questions, setQuestions] = useState<QuestionDoc[] | null>(null);
   const [isTimerStop, setIsTimerStop] = useState<boolean>(false);
   const [yourAnswers, setYourAnswers] = useState<YourAnswer[]>([]);
-  const [result, setResult] = useState<Models.Row | null>(null);
+  const [result, setResult] = useState<ResultDoc | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const [isSticky, setIsSticky] = useState<boolean>(false);
   useEffect(() => {
@@ -83,7 +73,7 @@ const Quiz = ({ test }: QuizProps) => {
   }, [isTimerStop]);
   const handleSubmit = async () => {
     const checkedAnswers: CheckedAnswer[] | undefined = questions?.map(
-      (question: Models.Row) => {
+      (question) => {
         const yourAnswer = yourAnswers.find(
           (answer) => answer.questionId === question.$id,
         );
@@ -103,12 +93,9 @@ const Quiz = ({ test }: QuizProps) => {
     );
     console.log(checkedAnswers);
     if (checkedAnswers && questions) {
-      const totalMarks: number = questions.reduce(
-        (acc: number, question: Models.Row) => {
-          return acc + Number(question.marks);
-        },
-        0,
-      );
+      const totalMarks: number = questions.reduce((acc: number, question) => {
+        return acc + Number(question.marks);
+      }, 0);
       const totalCorrect: number = checkedAnswers.reduce(
         (acc: number, answer: CheckedAnswer) => {
           if (answer.isCorrect) {
@@ -139,9 +126,10 @@ const Quiz = ({ test }: QuizProps) => {
       );
       const obtainedMarks: number = totalCorrect;
       const r: Result = {
+        $id: ID.unique(),
         studentId: "1",
         testId: test?.$id || "",
-        checkedAnswers,
+        checkedAnswers: [JSON.stringify(checkedAnswers)],
         totalMarks,
         totalCorrect,
         totalWrong,

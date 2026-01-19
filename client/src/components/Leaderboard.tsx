@@ -1,4 +1,4 @@
-import React from "react";
+
 import { type LeaderboardProps } from "../../types";
 import Typo from "./Typo";
 

@@ -2,50 +2,39 @@ import { useForm, Controller } from "react-hook-form";
 import Input from "./Input";
 import TextArea from "./TextArea";
 import Button from "./Button";
-
-import { useState } from "react";
 import useTest from "../hooks/useTest";
 import useMedia from "../hooks/useMedia";
-import { type Models } from "appwrite";
+import { ID } from "appwrite";
+import type { TestDoc, Test } from "../../types";
 
-export interface TestFormValues {
-  title: string;
-  description: string;
-  duration: number;
+export interface TestFormValues extends Omit<Test, "thumbnail"> {
   thumbnail: FileList | null;
-  status: "LIVE" | "COMPLETED" | "UPCOMING";
-  access: "PUBLIC" | "PRIVATE";
-  slug: string;
 }
 interface TestFormProps {
-  test?: Partial<Models.Row> | undefined;
+  test?: TestDoc;
   onTestSubmit: (isTestCreated: boolean) => void;
 }
 const TestForm = ({ onTestSubmit, test }: TestFormProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { createTest, updateTest } = useTest();
   const { upload, deleteFile, getFileView } = useMedia();
   const {
     control,
     handleSubmit,
     formState: { errors },
-    register,
   } = useForm<TestFormValues>({
     defaultValues: {
       title: test?.title || "",
       description: test?.description || "",
-      duration: test?.duration || 0,
+      duration: test?.duration || "",
       thumbnail: null,
       status: test?.status || "LIVE",
       access: test?.access || "PUBLIC",
-      slug: test?.$id || "",
+      userId: test?.userId,
+      $id: test?.$id || "",
     },
   });
 
   const onSubmit = async (data: TestFormValues) => {
-    setIsLoading(true);
-    setError(null);
     try {
       if (test) {
         console.log("update test");
@@ -59,7 +48,6 @@ const TestForm = ({ onTestSubmit, test }: TestFormProps) => {
         }
         const updatedTest = await updateTest({
           ...data,
-          userId: "695e2dcc002e7344aebe",
           thumbnail: thumbnail?.$id || test.thumbnail,
         });
         if (updatedTest) {
@@ -73,6 +61,7 @@ const TestForm = ({ onTestSubmit, test }: TestFormProps) => {
           if (thumbnailRes) {
             const test = await createTest({
               ...data,
+              $id: ID.unique(),
               userId: "695e2dcc002e7344aebe",
               thumbnail: thumbnailRes.$id,
             });
@@ -95,24 +84,6 @@ const TestForm = ({ onTestSubmit, test }: TestFormProps) => {
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
           {/* Title  */}
           {/*add slug   */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Slug</label>
-
-            <Controller
-              name="slug"
-              rules={{ required: "Slug is required" }}
-              control={control}
-              render={({ field }) => (
-                <Input
-                  type="text"
-                  {...field}
-                  onChange={(e) => field.onChange(e.target.value)}
-                  placeholder="Enter test slug"
-                  className="appearance-none block w-full bg-gray-200 text-gray-700 border border-red-500 rounded py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-white"
-                />
-              )}
-            />
-          </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">Title</label>

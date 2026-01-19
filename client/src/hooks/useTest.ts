@@ -1,20 +1,12 @@
 import client from "../lib/appwrite";
 import { TablesDB, ID } from "appwrite";
-import { type TestFormValues } from "../components/TestForm";
-// import { type IFormInput } from "../components/QuestionForm";
-interface CreateTestHookArg extends Omit<TestFormValues, "thumbnail"> {
-  thumbnail: string;
-  userId: string;
-}
-interface UpdateTestHookArg extends Partial<CreateTestHookArg> {
-  slug: string;
-}
-
+import { type Models } from "appwrite";
+import { type Test, type TestDoc } from "../../types";
 const useTest = () => {
   const database = new TablesDB(client);
-  const getTest = async () => {
+  const getTest = async (): Promise<Models.RowList<TestDoc>> => {
     try {
-      const res = await database.listRows({
+      const res = await database.listRows<TestDoc>({
         databaseId: "695e2dcc002e7344aebe",
         tableId: "test",
       });
@@ -23,10 +15,10 @@ const useTest = () => {
       throw error;
     }
   };
-  const getSingleTest = async (testId: string) => {
+  const getSingleTest = async (testId: string): Promise<TestDoc> => {
     console.log("getSingleTest-------");
     try {
-      const res = await database.getRow({
+      const res = await database.getRow<TestDoc>({
         databaseId: "695e2dcc002e7344aebe",
         tableId: "test",
         rowId: testId,
@@ -36,26 +28,13 @@ const useTest = () => {
       throw error;
     }
   };
-  const createTest = async (test: CreateTestHookArg) => {
+  const createTest = async (test: Test): Promise<TestDoc> => {
     try {
-      const response = await database.createRow({
+      const response = await database.createRow<TestDoc>({
         databaseId: "695e2dcc002e7344aebe",
         tableId: "test",
         rowId: ID.unique(),
-        data: {
-          title: test.title,
-
-          description: test.description,
-
-          duration: test.duration,
-
-          thumbnail: test.thumbnail,
-
-          status: test.status,
-
-          access: test.access,
-          userId: test.userId,
-        },
+        data: test,
       });
       return response;
     } catch (err: unknown) {
@@ -64,15 +43,15 @@ const useTest = () => {
       throw err;
     }
   };
-  const updateTest = async (test: UpdateTestHookArg) => {
+  const updateTest = async (test: Test): Promise<TestDoc> => {
     try {
       console.log("updateTest-------");
       console.log(test);
-      const { slug, ...other } = test;
-      const response = await database.updateRow({
+      const { $id, ...other } = test;
+      const response = await database.updateRow<TestDoc>({
         databaseId: "695e2dcc002e7344aebe",
         tableId: "test",
-        rowId: slug,
+        rowId: $id,
         data: other,
       });
       return response;

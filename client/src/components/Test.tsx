@@ -5,9 +5,9 @@ import Button from "./Button";
 import { useNavigate } from "react-router-dom";
 import useTest from "../hooks/useTest";
 import TestFrom from "./TestForm";
-import { type Models } from "appwrite";
 import useMedia from "../hooks/useMedia";
 import useQuestion from "../hooks/useQuestion";
+import type { TestDoc, QuestionDoc } from "../../types";
 // interface TestProps {
 //   onAddTest?: () => void;
 //   onEditTest?: () => void;
@@ -23,8 +23,8 @@ const Tests = () => {
   const { getFileView } = useMedia();
   const { getQuestions } = useQuestion();
   const navigate = useNavigate();
-  const [tests, setTests] = useState<Models.Row[]>([]);
-  const [questions, setQuestions] = useState<Models.Row[]>([]);
+  const [tests, setTests] = useState<TestDoc[]>([]);
+  const [questions, setQuestions] = useState<QuestionDoc[]>([]);
   const fetchTest = async () => {
     try {
       const res = await getTest();
@@ -33,7 +33,7 @@ const Tests = () => {
         setTests(res.rows);
         setQuestions(questions.rows);
       }
-    } catch (err:unknown) {
+    } catch (err: unknown) {
       console.log("error");
       // console.log(err);
     }

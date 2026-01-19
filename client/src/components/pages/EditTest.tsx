@@ -5,7 +5,7 @@ import { useParams } from "react-router-dom";
 import useTest from "../../hooks/useTest";
 import { useEffect, useState } from "react";
 import Quiz from "./Quiz";
-import { type Models } from "appwrite";
+import type { TestDoc } from "../../../types";
 
 const EditTest = () => {
   const { id } = useParams();
@@ -25,7 +25,7 @@ const EditTest = () => {
     }
   };
   const { getSingleTest } = useTest();
-  const [test, setTest] = useState<Models.Row | null>(null);
+  const [test, setTest] = useState<TestDoc | null>(null);
   const fetchTest = async (id: string) => {
     try {
       const res = await getSingleTest(id);
