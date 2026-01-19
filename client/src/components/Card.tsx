@@ -1,4 +1,4 @@
-import React from "react";
+// import React from "react";
 import { Link } from "react-router-dom";
 interface CardProps {
   image: string;
@@ -8,7 +8,7 @@ interface CardProps {
 }
 const Card = ({ image, title, description, tags }: CardProps) => {
   return (
-    <Link to={"/make-test"}>
+    <Link to={"/admin"}>
       <div className="bg-white overflow-hidden rounded-lg shadow-md overflow-hidden p-4">
         <img
           src={image}

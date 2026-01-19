@@ -1,54 +1,61 @@
 import React, { useState, useEffect, useRef } from "react";
 import Button from "../Button";
-import { type Test } from "../QuestionForm";
+import { type Models } from "appwrite";
 import Typo from "../Typo";
 import Timer from "../Timer";
 import Leaderboard from "../Leaderboard";
-import { type IFormInput } from "../QuestionForm";
+import useQuestion from "../../hooks/useQuestion";
+import useResult from "../../hooks/useResult";
 
 interface YourAnswer {
   questionId: string;
   answer: string;
 }
-interface CheckedAnswer extends Omit<IFormInput, "marks"> {
+interface CheckedAnswer extends Omit<Models.Row, "marks"> {
   isCorrect: boolean;
   answer: string;
 }
 export interface Result {
-  userId: string;
+  studentId: string;
   testId: string;
   checkedAnswers: CheckedAnswer[];
   totalMarks: number;
   totalCorrect: number;
   totalWrong: number;
   totalSkipped: number;
-  totalQuestions: number;
-  totalMarksObtained: number;
+  rank?: number;
+
+  obtainedMarks: number;
 }
-const Quiz = () => {
+interface QuizProps {
+  test: Models.Row | null;
+}
+const Quiz = ({ test }: QuizProps) => {
   // const navigate = useNavigate();
-  const [test, setTest] = useState<Test | null>(null);
+  const { getQuestions } = useQuestion();
+  const { createResult, getResults } = useResult();
+  const [questions, setQuestions] = useState<Models.Row[] | null>(null);
   const [isTimerStop, setIsTimerStop] = useState<boolean>(false);
   const [yourAnswers, setYourAnswers] = useState<YourAnswer[]>([]);
-  const [result, setResult] = useState<Result | null>(null);
+  const [result, setResult] = useState<Models.Row | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const [isSticky, setIsSticky] = useState<boolean>(false);
   useEffect(() => {
-    const localTest: Test | null = getTestFromLocal("2");
+    console.log(test);
+    if (result) {
+    }
+  }, [result]);
+  useEffect(() => {
+    console.log(test);
+    if (test) {
+      getQuestions([test.$id]).then((res) => {
+        setQuestions(res.rows);
+      });
+    }
+  }, [test]);
 
-    if (localTest) {
-      setTest(localTest);
-    }
-  }, [yourAnswers, setYourAnswers]);
-  const getTestFromLocal = (testId: string): Test | null => {
-    const localTestString = localStorage.getItem(testId);
-    if (localTestString) {
-      const localTest: Test = JSON.parse(localTestString);
-      return localTest;
-    }
-    return null;
-  };
   const handleOption = (yourAnswer: YourAnswer) => {
+    console.log(yourAnswer);
     const filteredAnswers = yourAnswers.filter(
       (answer) => answer.questionId !== yourAnswer.questionId,
     );
@@ -74,11 +81,11 @@ const Quiz = () => {
       handleSubmit();
     }
   }, [isTimerStop]);
-  const handleSubmit = () => {
-    const checkedAnswers: CheckedAnswer[] | undefined = test?.questions.map(
-      (question: IFormInput) => {
+  const handleSubmit = async () => {
+    const checkedAnswers: CheckedAnswer[] | undefined = questions?.map(
+      (question: Models.Row) => {
         const yourAnswer = yourAnswers.find(
-          (answer) => answer.questionId === question.questionId,
+          (answer) => answer.questionId === question.$id,
         );
         if (yourAnswer) {
           return {
@@ -94,29 +101,24 @@ const Quiz = () => {
         };
       },
     );
-
-    if (checkedAnswers && test) {
-      const totalMarks: number = test.questions.reduce(
-        (acc: number, _: any) => {
-          return acc + 1;
+    console.log(checkedAnswers);
+    if (checkedAnswers && questions) {
+      const totalMarks: number = questions.reduce(
+        (acc: number, question: Models.Row) => {
+          return acc + Number(question.marks);
         },
         0,
       );
       const totalCorrect: number = checkedAnswers.reduce(
         (acc: number, answer: CheckedAnswer) => {
           if (answer.isCorrect) {
-            const question = test.questions.find(
-              (question: IFormInput) =>
-                question.questionId === answer.questionId,
-            );
-            if (question) {
-              return acc + 1;
-            }
+            return acc + 1;
           }
           return acc;
         },
         0,
       );
+
       const totalWrong: number = checkedAnswers.reduce(
         (acc: number, answer: CheckedAnswer) => {
           if (!answer.isCorrect && answer.answer !== "") {
@@ -135,21 +137,24 @@ const Quiz = () => {
         },
         0,
       );
-      const totalQuestions: number = test.questions.length;
-      const totalMarksObtained: number = totalCorrect;
+      const obtainedMarks: number = totalCorrect;
       const r: Result = {
-        userId: "1",
-        testId: test.testId,
+        studentId: "1",
+        testId: test?.$id || "",
         checkedAnswers,
         totalMarks,
         totalCorrect,
         totalWrong,
         totalSkipped,
-        totalQuestions,
-        totalMarksObtained,
+        obtainedMarks,
+        rank: 1,
       };
-      console.log("result", r);
-      setResult(r);
+      const res = await createResult(r);
+      getResults(res.$id).then((res) => {
+        if (res) {
+          setResult(res);
+        }
+      });
     }
   };
   useEffect(() => {
@@ -167,29 +172,6 @@ const Quiz = () => {
     }
     return () => observer.disconnect();
   }, [isSticky]);
-  const calculateGrade = (percentage: number): string => {
-    if (percentage >= 90) {
-      return "A+";
-    } else if (percentage >= 80) {
-      return "A";
-    } else if (percentage >= 70) {
-      return "B";
-    } else if (percentage >= 60) {
-      return "C";
-    } else if (percentage >= 50) {
-      return "D";
-    } else if (percentage >= 40) {
-      return "E";
-    } else {
-      return "F";
-    }
-  };
-  const calculatePercentage = (
-    totalMarks: number,
-    totalMarksObtained: number,
-  ): number => {
-    return Math.round((totalMarksObtained / totalMarks) * 100);
-  };
   return (
     <div>
       {!result ? (
@@ -201,20 +183,20 @@ const Quiz = () => {
               <Timer
                 className="text-primary bg-white ring rounded-md text-center grid place-items-center p-2"
                 stop={handleStopTimer}
-                time={10}
+                time={25}
                 isRunning={true}
               />
               <div className="bg-white w-full  rounded-md p-2 ring ring-primary flex flex-row md:flex-col gap-5 overflow-x-auto">
                 <div className="fit-content flex  flex-row gap-5 md:flex-wrap justify-start items-center">
-                  {test?.questions.map((question, index) => {
+                  {questions?.map((question, index) => {
                     const yourAnswer = yourAnswers.find(
-                      (answer) => answer.questionId === question.questionId,
+                      (answer) => answer.questionId === question.$id,
                     );
                     return (
                       <Button
                         onClick={() => {
                           document
-                            .getElementById(question.questionId)
+                            .getElementById(question.$id)
                             ?.scrollIntoView({ behavior: "smooth" });
                         }}
                         className={`rounded-full bg-accent-dark shrink-0 h-8 w-8  ${
@@ -241,17 +223,17 @@ const Quiz = () => {
           </div>
           <div className="flex flex-col justify-center gap-5">
             <div ref={ref}></div>
-            {test?.questions.map((question, index) => {
+            {questions?.map((question, index) => {
               const yourAnswer = yourAnswers.find(
-                (answer) => answer.questionId === question.questionId,
+                (answer) => answer.questionId === question.$id,
               );
               return (
                 <div
-                  id={question.questionId}
+                  id={question.$id}
                   className="bg-white shadow-md border-1 p-4 rounded-md border-background-light"
                 >
                   <Typo className="text-lg font-bold text-background-dark">
-                    {`Questions ${index + 1} of ${test.questions.length}`}
+                    {`Questions ${index + 1} of ${questions.length}`}
                   </Typo>
                   <Typo className="text-xl font-bold text-background-dark my-4">
                     {`Q${index + 1})  ${question.title}`}
@@ -263,7 +245,7 @@ const Quiz = () => {
                       }`}
                       onClick={() =>
                         handleOption({
-                          questionId: question.questionId,
+                          questionId: question.$id,
                           answer: "A",
                         })
                       }
@@ -287,7 +269,7 @@ const Quiz = () => {
                       }`}
                       onClick={() =>
                         handleOption({
-                          questionId: question.questionId,
+                          questionId: question.$id,
                           answer: "B",
                         })
                       }
@@ -313,7 +295,7 @@ const Quiz = () => {
                       }`}
                       onClick={() =>
                         handleOption({
-                          questionId: question.questionId,
+                          questionId: question.$id,
                           answer: "C",
                         })
                       }
@@ -337,7 +319,7 @@ const Quiz = () => {
                       }`}
                       onClick={() =>
                         handleOption({
-                          questionId: question.questionId,
+                          questionId: question.$id,
                           answer: "D",
                         })
                       }
@@ -370,16 +352,8 @@ const Quiz = () => {
               img: "https://randomuser.me/api/portraits/men/1.jpg",
               totalMarks: result.totalMarks,
               totalCorrect: result.totalCorrect,
-              percentage: calculatePercentage(
-                result.totalMarks,
-                result.totalMarksObtained,
-              ),
-              grade: calculateGrade(
-                calculatePercentage(
-                  result.totalMarks,
-                  result.totalMarksObtained,
-                ),
-              ),
+              percentage: 0,
+              grade: "a",
             },
           ]}
         />

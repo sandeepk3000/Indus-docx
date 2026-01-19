@@ -84,10 +84,7 @@ const TestForm = ({ onTestSubmit, test }: TestFormProps) => {
           }
         }
       }
-    } catch (err) {
-      console.log(err.message);
-      setError(err.message);
-    }
+    } catch (err: unknown) {}
   };
 
   return (

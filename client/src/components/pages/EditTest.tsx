@@ -1,9 +1,10 @@
-import React from "react";
+// import React from "react";
 import TestForm from "../TestForm";
 import QuestionForm from "../QuestionForm";
 import { useParams } from "react-router-dom";
 import useTest from "../../hooks/useTest";
 import { useEffect, useState } from "react";
+import Quiz from "./Quiz";
 import { type Models } from "appwrite";
 
 const EditTest = () => {
@@ -31,7 +32,7 @@ const EditTest = () => {
       if (res) {
         setTest(res);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.log(err);
     }
   };
@@ -48,6 +49,7 @@ const EditTest = () => {
       <h1>Edit Test</h1>
       {test && <TestForm test={test} onTestSubmit={onTestSubmit} />}
       {test && <QuestionForm onQuestionSubmit={onQuestionSubmit} test={test} />}
+      {test && <Quiz test={test} />}
     </div>
   );
 };

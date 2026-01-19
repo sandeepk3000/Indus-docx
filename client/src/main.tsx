@@ -1,19 +1,17 @@
-import { StrictMode } from "react";
+// import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import SingleBlog from "./components/pages/SingleBlog";
 import Home from "./components/pages/Home";
-import MakeTest from "./components/pages/MakeTest";
-import Quiz from "./components/pages/Quiz.tsx";
 import Admin from "./components/pages/Admin.tsx";
-import Carousel from "./components/pages/Carousel.tsx";
+// import Carousel from "./components/pages/Carousel.tsx";
 import Login from "./components/pages/Login.tsx";
 import { Auth0Provider } from "@auth0/auth0-react";
 import AuthLayout from "./components/AuthLayout.tsx";
 import Callback from "./components/pages/Callback.tsx";
-import { Navigate } from "react-router-dom";
+
 import EditTest from "./components/pages/EditTest.tsx";
 const router = createBrowserRouter([
   {
@@ -29,24 +27,8 @@ const router = createBrowserRouter([
         element: <SingleBlog />,
       },
       {
-        path: "/make-test",
-        element: <MakeTest />,
-      },
-      {
         path: "/admin",
         element: <Admin />,
-      },
-      {
-        path: "/quiz",
-        element: (
-          <AuthLayout authentication>
-            <Quiz />
-          </AuthLayout>
-        ),
-      },
-      {
-        path: "/c",
-        element: <Carousel />,
       },
       {
         path: "/login",

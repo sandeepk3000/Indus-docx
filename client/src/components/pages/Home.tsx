@@ -6,7 +6,7 @@ import { FaSearch } from "react-icons/fa";
 import { useAuth0 } from "@auth0/auth0-react";
 const Home = () => {
   const [search, setSearch] = useState<string>("");
-  const { loginWithRedirect, logout, user, isLoading, isAuthenticated } = useAuth0();
+  const { logout, isLoading, isAuthenticated } = useAuth0();
 
   const cardsData = [
     {
@@ -20,13 +20,14 @@ const Home = () => {
       title: "Blog 2",
       description: "Description 2",
       image: "https://picsum.photos/200/300",
+      tags: ["Javascript's", "React"],
     },
     {
       title: "Blog 3",
       description: "Description 3",
       image: "https://picsum.photos/200/300",
+      tags: ["Javascript's", "React"],
     },
-    {},
   ];
   return (
     <div>
@@ -49,9 +50,10 @@ const Home = () => {
       <Typo className="mt-4">Blogs</Typo>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-        {cardsData.map((card, index) => {
-          return <Card key={index} {...card} />;
-        })}
+        {cardsData &&
+          cardsData.map((card, index) => {
+            return <Card key={index} {...card} />;
+          })}
       </div>
     </div>
   );

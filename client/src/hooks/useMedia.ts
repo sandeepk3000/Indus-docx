@@ -1,4 +1,4 @@
-import { useState } from "react";
+// import { useState } from "react";
 import { Storage } from "appwrite";
 import client from "../lib/appwrite";
 import { ID } from "appwrite";
@@ -16,7 +16,7 @@ export const useUpload = () => {
       );
 
       return response;
-    } catch (err) {
+    } catch (err: unknown) {
       throw err;
     }
   };
@@ -30,7 +30,7 @@ export const useUpload = () => {
         fileId: fileId,
       });
       return url;
-    } catch (err) {
+    } catch (err: unknown) {
       console.log(err);
       throw err;
     }
@@ -48,7 +48,7 @@ export const useUpload = () => {
       console.log("delete file");
       console.log(response);
       return response;
-    } catch (err) {
+    } catch (err: unknown) {
       throw err;
     }
   };

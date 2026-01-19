@@ -14,6 +14,7 @@ export interface LeaderboardProps {
   totalMarks: number;
   totalCorrect: number;
   percentage: number;
+  rank?: number;
   grade: string;
 }
 // name,email,img,

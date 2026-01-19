@@ -1,14 +1,13 @@
 import client from "../lib/appwrite";
 import { TablesDB, ID } from "appwrite";
 import { type TestFormValues } from "../components/TestForm";
-import { type IFormInput } from "../components/QuestionForm";
+// import { type IFormInput } from "../components/QuestionForm";
 interface CreateTestHookArg extends Omit<TestFormValues, "thumbnail"> {
   thumbnail: string;
   userId: string;
 }
 interface UpdateTestHookArg extends Partial<CreateTestHookArg> {
   slug: string;
-  questions?: string[];
 }
 
 const useTest = () => {
@@ -20,7 +19,7 @@ const useTest = () => {
         tableId: "test",
       });
       return res;
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   };
@@ -33,7 +32,7 @@ const useTest = () => {
         rowId: testId,
       });
       return res;
-    } catch (error) {
+    } catch (error: unknown) {
       throw error;
     }
   };
@@ -59,7 +58,7 @@ const useTest = () => {
         },
       });
       return response;
-    } catch (err) {
+    } catch (err: unknown) {
       // console.log(err.message);
 
       throw err;
@@ -77,7 +76,7 @@ const useTest = () => {
         data: other,
       });
       return response;
-    } catch (err) {
+    } catch (err: unknown) {
       throw err;
     }
   };

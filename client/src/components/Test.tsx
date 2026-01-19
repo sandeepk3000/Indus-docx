@@ -1,34 +1,39 @@
-import React from "react";
+// import React from "react";
 import { useState, useEffect } from "react";
-import QuestionForm from "./QuestionForm";
+// import QuestionForm from "./QuestionForm";
 import Button from "./Button";
 import { useNavigate } from "react-router-dom";
 import useTest from "../hooks/useTest";
 import TestFrom from "./TestForm";
 import { type Models } from "appwrite";
 import useMedia from "../hooks/useMedia";
-interface TestProps {
-  onAddTest?: () => void;
-  onEditTest?: () => void;
-}
+import useQuestion from "../hooks/useQuestion";
+// interface TestProps {
+//   onAddTest?: () => void;
+//   onEditTest?: () => void;
+// }
 interface Tab {
   tabname: string;
   breadcrumbs: string;
   isActive: boolean;
 }
 
-const Tests = ({ onAddTest, onEditTest }: TestProps) => {
+const Tests = () => {
   const { getTest } = useTest();
   const { getFileView } = useMedia();
+  const { getQuestions } = useQuestion();
   const navigate = useNavigate();
   const [tests, setTests] = useState<Models.Row[]>([]);
+  const [questions, setQuestions] = useState<Models.Row[]>([]);
   const fetchTest = async () => {
     try {
       const res = await getTest();
-      if (res) {
+      const questions = await getQuestions(res.rows.map((row) => row.$id));
+      if (res && questions) {
         setTests(res.rows);
+        setQuestions(questions.rows);
       }
-    } catch (err) {
+    } catch (err:unknown) {
       console.log("error");
       // console.log(err);
     }
@@ -154,8 +159,23 @@ const Tests = ({ onAddTest, onEditTest }: TestProps) => {
 
                 {/* Meta info */}
                 <div className="flex items-center justify-between text-sm text-gray-700">
-                  <span>📝 {test.questions.length} Questions</span>
+                  <span>
+                    📝{" "}
+                    {questions.filter((q) => q.tests.includes(test.$id)).length}{" "}
+                    Questions
+                  </span>
                   <span>⏱ {test.duration} min</span>
+
+                  <span>
+                    📊{" "}
+                    {questions
+                      .filter((q) => q.tests.includes(test.$id))
+                      .reduce(
+                        (acc, question) => acc + Number(question.marks),
+                        0,
+                      )}{" "}
+                    Marks
+                  </span>
                 </div>
 
                 {/* Actions */}

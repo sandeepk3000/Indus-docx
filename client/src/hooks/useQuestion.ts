@@ -3,10 +3,10 @@ import { TablesDB, ID, Query } from "appwrite";
 import client from "../lib/appwrite";
 import { type IFormInput } from "../components/QuestionForm";
 interface CreateQuestionHookArg extends IFormInput {
-  testId: string;
+  tests: string[];
 }
 interface UpdateQuestionHookArg extends IFormInput {
-  testId: string;
+  tests: string[];
 }
 const useQuestion = () => {
   const database = new TablesDB(client);
@@ -20,7 +20,7 @@ const useQuestion = () => {
         data: other,
       });
       return response;
-    } catch (err) {
+    } catch (err: unknown) {
       throw err;
     }
   };
@@ -34,19 +34,19 @@ const useQuestion = () => {
         data: other,
       });
       return response;
-    } catch (err) {
+    } catch (err: unknown) {
       throw err;
     }
   };
-  const getQuestions = async (testId: string) => {
+  const getQuestions = async (tests: string[]) => {
     try {
       const response = await database.listRows({
         databaseId: "695e2dcc002e7344aebe",
         tableId: "question",
-        queries: [Query.equal("testId", testId)],
+        queries: [Query.equal("tests", tests)],
       });
       return response;
-    } catch (err) {
+    } catch (err: unknown) {
       throw err;
     }
   };

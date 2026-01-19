@@ -1,12 +1,12 @@
 import Input from "./Input";
 import Select from "./Select";
-import { useEffect, useState, useId, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { v4 as uuid } from "uuid";
 import Button from "./Button";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 import useTest from "../hooks/useTest";
 import { type Models } from "appwrite";
-import { type TestFormValues } from "./TestForm";
+// import { type TestFormValues } from "./TestForm";
 import useQuestion from "../hooks/useQuestion";
 export interface IFormInput {
   $id: string;
@@ -29,9 +29,8 @@ interface QuestionFormProps {
 
 const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
   //if test is already in local storage then set it to test state  for ts
-  const { getQuestions, createQuestion, updateQuestion} = useQuestion();
+  const { getQuestions, createQuestion, updateQuestion } = useQuestion();
   const isFirstRender = useRef(true);
-  const { updateTest } = useTest();
   const [questions, setQuestions] = useState<Models.Row[] | null>(null);
   const [question, setQuestion] = useState<IFormInput | null>(null);
   const [edit, setEdit] = useState<boolean>(false);
@@ -39,7 +38,6 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
     control,
     handleSubmit,
     setValue,
-    getValues,
     formState: { errors },
   } = useForm<IFormInput>({
     defaultValues: {
@@ -57,14 +55,47 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
     IFormInputAction<IFormInput>
   > = async (action) => {
     if (action.type === "add") {
-      setQuestion(action.payload);
+      createQuestion({
+        $id: action.payload.$id,
+        title: action.payload.title,
+        optionA: action.payload.optionA,
+        optionB: action.payload.optionB,
+        optionC: action.payload.optionC,
+        optionD: action.payload.optionD,
+        correctAnswer: action.payload.correctAnswer,
+        marks: action.payload.marks,
+        tests: test?.$id ? [test?.$id] : [],
+      }).then(async (_) => {
+        onQuestionSubmit(true);
+      });
     } else {
-      setQuestion(action.payload);
+      const findUpdateQuestion = questions?.find(
+        (question) => question.$id === action.payload.$id,
+      );
+
+      if (findUpdateQuestion) {
+        const isTestIdExist = findUpdateQuestion.tests.includes(test?.$id);
+        updateQuestion({
+          $id: action.payload.$id,
+          title: action.payload.title,
+          optionA: action.payload.optionA,
+          optionB: action.payload.optionB,
+          optionC: action.payload.optionC,
+          optionD: action.payload.optionD,
+          correctAnswer: action.payload.correctAnswer,
+          marks: action.payload.marks,
+          tests: isTestIdExist
+            ? findUpdateQuestion.tests
+            : [...findUpdateQuestion.tests, test?.$id],
+        }).then((_) => {
+          onQuestionSubmit(true);
+        });
+      }
     }
   };
   const editQuestion = ($id: string) => {
     setEdit(true);
-    const question = questions.find((question) => question.$id === $id);
+    const question = questions?.find((question) => question.$id === $id);
     if (question) {
       setValue("$id", question.$id);
       setValue("title", question.title);
@@ -83,23 +114,6 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
       return;
     }
     if (question) {
-      createQuestion({
-        $id: question.$id,
-        title: question.title,
-        optionA: question.optionA,
-        optionB: question.optionB,
-        optionC: question.optionC,
-        optionD: question.optionD,
-        correctAnswer: question.correctAnswer,
-        marks: question.marks,
-        testId: test?.$id || "",
-      }).then(async (res) => {
-        await updateTest({
-          slug: test?.$id || "",
-          questions: [...test?.questions, res.$id],
-        });
-        onQuestionSubmit(true);
-      });
     }
     setValue("$id", "");
     setValue("title", "");
@@ -115,8 +129,8 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
   useEffect(() => {
     if (test) {
       console.log("helkdkkkkk", test);
-      if (test.questions.length > 0) {
-        getQuestions(test.$id).then((res) => {
+      if (test) {
+        getQuestions([test.$id]).then((res) => {
           console.log(res.rows);
           setQuestions(res.rows);
         });
