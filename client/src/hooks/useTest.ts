@@ -1,5 +1,5 @@
 import client from "../lib/appwrite";
-import { TablesDB, ID } from "appwrite";
+import { TablesDB } from "appwrite";
 import { type Models } from "appwrite";
 import { type Test, type TestDoc } from "../../types";
 const useTest = () => {
@@ -30,11 +30,12 @@ const useTest = () => {
   };
   const createTest = async (test: Test): Promise<TestDoc> => {
     try {
+      const { $id, ...other } = test;
       const response = await database.createRow<TestDoc>({
         databaseId: "695e2dcc002e7344aebe",
         tableId: "test",
-        rowId: ID.unique(),
-        data: test,
+        rowId: $id,
+        data: other,
       });
       return response;
     } catch (err: unknown) {

@@ -48,7 +48,7 @@ const TestForm = ({ onTestSubmit, test }: TestFormProps) => {
         }
         const updatedTest = await updateTest({
           ...data,
-          thumbnail: thumbnail?.$id || test.thumbnail,
+          thumbnail: thumbnail?.$id || test.thumbnail
         });
         if (updatedTest) {
           alert("test updated");

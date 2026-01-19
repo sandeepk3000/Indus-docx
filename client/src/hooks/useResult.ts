@@ -1,4 +1,4 @@
-import { TablesDB, ID } from "appwrite";
+import { TablesDB } from "appwrite";
 import client from "../lib/appwrite";
 
 import type { ResultDoc, Result } from "../../types";
