@@ -62,12 +62,12 @@ export interface ListRows<T> {
   rows: T[];
   total: number;
 }
-export type QuestionOptions{
+export type QuestionOptions = {
   optionA: string;
   optionB: string;
   optionC: string;
   optionD: string;
-}
+};
 export type TestDoc = Omit<Test, "$id"> & Models.Row;
 export type QuestionDoc = Omit<Question, "$id"> & Models.Row;
 export type ResultDoc = Omit<Result, "$id"> & Models.Row;
