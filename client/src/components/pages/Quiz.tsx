@@ -171,7 +171,7 @@ const Quiz = ({ test }: QuizProps) => {
               <Timer
                 className="text-primary bg-white ring rounded-md text-center grid place-items-center p-2"
                 stop={handleStopTimer}
-                time={25}
+                time={Number(test?.duration) * 60}
                 isRunning={true}
               />
               <div className="bg-white w-full  rounded-md p-2 ring ring-primary flex flex-row md:flex-col gap-5 overflow-x-auto">
