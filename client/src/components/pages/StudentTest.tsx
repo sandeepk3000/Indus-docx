@@ -11,32 +11,6 @@ import type { QuestionDoc, ResultDoc, TestDoc } from "../../../types";
 import { formatDateTime } from "../../utils/dateFormatter";
 import gradeGenerater from "../../utils/gradeGenerater";
 
-const testResults = [
-  {
-    id: 1,
-    title: "Maths Mock Test 01",
-    thumbnail: "https://images.unsplash.com/photo-1584697964403-ef6f3f6fcd8f",
-    obtainedMarks: 72,
-    totalMarks: 100,
-    totalWrong: 8,
-    totalSkipped: 5,
-    totalQuestions: 30,
-    grade: "B",
-    date: "2026-01-20",
-  },
-  {
-    id: 2,
-    title: "Physics Live Test",
-    thumbnail: "https://images.unsplash.com/photo-1518770660439-4636190af475",
-    obtainedMarks: 88,
-    totalMarks: 100,
-    totalWrong: 3,
-    totalSkipped: 2,
-    totalQuestions: 30,
-    grade: "A",
-    date: "2026-01-10",
-  },
-];
 
 export default function StudentTest() {
   const [tests, setTests] = useState<TestDoc[] | null>(null);

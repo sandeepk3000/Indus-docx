@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import useTest from "../../hooks/useTest";
 import type { TestDoc } from "../../../types";
 import useMedia from "../../hooks/useMedia";
