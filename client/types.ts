@@ -23,6 +23,7 @@ export interface Result {
   checkedAnswers: string[];
   totalMarks: number;
   totalCorrect: number;
+  testCode: string;
   totalWrong: number;
   totalSkipped: number;
   rank?: number;
@@ -34,9 +35,17 @@ export interface Test {
   title: string;
   description: string;
   duration: string;
+  testCodes?: string[] | null;
   thumbnail: string;
-  status: "LIVE" | "COMPLETED" | "UPCOMING";
+  status: "PUBLISHED" | "UPCOMING";
   access: "PUBLIC" | "PRIVATE";
+}
+export interface Attempt {
+  $id: string;
+  studentId: string;
+  testCode: string;
+  startTime: Date;
+  submitted: boolean;
 }
 export interface LeaderboardProps {
   name: string;
@@ -69,6 +78,7 @@ export type QuestionOptions = {
   optionD: string;
 };
 export type TestDoc = Omit<Test, "$id"> & Models.Row;
+export type AttemptDoc = Omit<Attempt, "$id"> & Models.Row;
 export type QuestionDoc = Omit<Question, "$id"> & Models.Row;
 export type ResultDoc = Omit<Result, "$id"> & Models.Row;
 // name,email,img,

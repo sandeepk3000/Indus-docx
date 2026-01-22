@@ -1,4 +1,4 @@
-import { TablesDB } from "appwrite";
+import { TablesDB, type Models } from "appwrite";
 import client from "../lib/appwrite";
 
 import type { ResultDoc, Result } from "../../types";
@@ -32,7 +32,7 @@ const useResult = () => {
       throw err;
     }
   };
-  const getResults = async (resultId: string): Promise<ResultDoc> => {
+  const getResult = async (resultId: string): Promise<ResultDoc> => {
     try {
       const response = await database.getRow<ResultDoc>({
         databaseId: "695e2dcc002e7344aebe",
@@ -44,6 +44,21 @@ const useResult = () => {
       throw err;
     }
   };
-  return { createResult, updateResult, getResults };
+  const getResults = async (
+    query: string[],
+  ): Promise<Models.RowList<ResultDoc>> => {
+    console.log(query);
+    try {
+      const response = await database.listRows<ResultDoc>({
+        databaseId: "695e2dcc002e7344aebe",
+        tableId: "result",
+        queries: query,
+      });
+      return response;
+    } catch (err) {
+      throw err;
+    }
+  };
+  return { createResult, updateResult, getResult, getResults };
 };
 export default useResult;

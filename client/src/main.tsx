@@ -10,41 +10,99 @@ import Admin from "./components/pages/Admin.tsx";
 import Login from "./components/pages/Login.tsx";
 import { Auth0Provider } from "@auth0/auth0-react";
 import AuthLayout from "./components/AuthLayout.tsx";
-import Callback from "./components/pages/Callback.tsx";
 
+import Test from "./components/pages/Test.tsx";
+import Live from "./components/pages/Live.tsx";
+import Leaderboard from "./components/pages/Leaderboard.tsx";
+import DashboardLayout from "./components/DashboardLayout.tsx";
+import Student from "./components/pages/Student.tsx";
+import StudentTest from "./components/pages/StudentTest.tsx";
+import Quizzes from "./components/pages/Quizzes.tsx";
+import Quiz from "./components/pages/Quiz.tsx";
+import LiveQuizManager from "./components/pages/LiveQuizManager.tsx";
 import EditTest from "./components/pages/EditTest.tsx";
+import StudentLive from "./components/pages/StudentLive.tsx";
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     children: [
       {
-        path: "/",
+        index: true,
         element: <Home />,
       },
       {
-        path: "/single-blog/:id",
+        path: "single-blog/:id",
         element: <SingleBlog />,
       },
+
       {
-        path: "/admin",
-        element: <Admin />,
-      },
-      {
-        path: "/login",
+        path: "login",
         element: (
           <AuthLayout authentication={false}>
             <Login />
           </AuthLayout>
         ),
       },
+    ],
+  },
+  {
+    path: "/admin",
+    element: <DashboardLayout />,
+    children: [
       {
-        path: "/callback",
-        element: <Callback />,
+        index: true,
+        element: <Admin />,
       },
       {
-        path: "/admin/tests/:id/edit",
+        path: "tests",
+        element: <Test />, // create,edit,delete,view
+      },
+      {
+        path: "live",
+        element: <Live />, // live tests
+      },
+      {
+        element: <Leaderboard />,
+        path: "leaderboards",
+      },
+      {
+        path: "tests/:id/edit",
         element: <EditTest />,
+      },
+    ],
+  },
+  {
+    path: "/student",
+    element: <DashboardLayout />,
+    children: [
+      {
+        index: true,
+        element: <Student />,
+      },
+      {
+        path: "tests",
+        element: <StudentTest />,
+      },
+      {
+        path: "live",
+        element: <StudentLive />,
+      },
+      {
+        path: "leaderboards",
+        element: <Leaderboard />,
+      },
+      {
+        path: "quizzes",
+        element: <Quizzes />,
+      },
+      {
+        path: "live/quiz/:id",
+        element: <LiveQuizManager />,
+      },
+      {
+        path: "quiz/:id",
+        element: <Quiz />,
       },
     ],
   },
