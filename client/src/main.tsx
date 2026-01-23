@@ -128,8 +128,7 @@ createRoot(document.getElementById("root")!).render(
     domain="dev-oeemfegcvmdfmku4.us.auth0.com"
     clientId="6KYYfD9aZniumn2Wu5RqoSQKqFz6g3ZY"
     authorizationParams={{
-      redirect_uri:
-        "https://313a2eae-d86f-4e46-b8dd-da27c7219c41-00-2igpp3ubm6gg8.sisko.replit.dev/callback",
+      redirect_uri: window.location.origin + "/callback",
     }}
   >
     <RouterProvider router={router} />,
