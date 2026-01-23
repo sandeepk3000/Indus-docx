@@ -1,4 +1,4 @@
-import { BookOpenCheck, Puzzle, Home, Radio } from "lucide-react";
+import { BookOpenCheck, Puzzle, Radio, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import {
@@ -12,34 +12,25 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-// const items = [
-//   {
-//     title: "Home",
-//     url: "/admin",
-//     icon: Home,
-//   },
-//   {
-//     title: "Live",
-//     url: "/admin/live",
-//     icon: Radio,
-//   },
-//   {
-//     title: "Test",
-//     url: "/admin/tests",
-//     icon: BookOpenCheck,
-//   },
-//   {
-//     title: "Leaderboard",
-//     url: "/admin/leaderboards",
-//     icon: Trophy,
-//   },
-// ];
-const studentItems = [
+import { useAuth0 } from "@auth0/auth0-react";
+const adminItems = [
   {
-    title: "Home",
-    url: "/student",
-    icon: Home,
+    title: "Live",
+    url: "/admin/live",
+    icon: Radio,
   },
+  {
+    title: "Test",
+    url: "/admin/tests",
+    icon: BookOpenCheck,
+  },
+  {
+    title: "Leaderboard",
+    url: "/admin/leaderboards",
+    icon: Trophy,
+  },
+];
+const studentItems = [
   {
     title: "Live",
     url: "/student/live",
@@ -58,6 +49,9 @@ const studentItems = [
 ];
 
 export function AppSidebar() {
+  const { user } = useAuth0();
+  const roles = user?.["https://indusdocx.com/roles"];
+  const items = roles?.includes("admin") ? adminItems : studentItems;
   const { setOpen, isMobile, open, setOpenMobile } = useSidebar();
   const handleSidebarOpen = () => {
     if (isMobile) {
@@ -67,13 +61,13 @@ export function AppSidebar() {
     }
   };
   return (
-    <Sidebar variant="sidebar">
+    <Sidebar variant="inset">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {studentItems.map((item) => {
+              {items.map((item) => {
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton onClick={handleSidebarOpen} asChild>

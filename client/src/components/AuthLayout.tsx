@@ -1,34 +1,52 @@
 import { useAuth0 } from "@auth0/auth0-react";
-import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
-export interface AuthLayoutProps {
-   children: React.ReactNode;
+import Navbar from "./Navbar";
+import Loading from "./Loading";
+import { type ReactNode } from "react";
+interface AuthLayoutProps {
+   children: ReactNode;
    authentication?: boolean;
 }
-const AuthLayout = ({ children, authentication = true }: AuthLayoutProps) => {
-   const location = useLocation();
-   const navigate = useNavigate();
-   const { isAuthenticated, isLoading, loginWithRedirect } = useAuth0();
-   console.log(isAuthenticated, isLoading);
-   console.log(location.pathname, location.search);
 
-   if (isLoading) {
-      return <div>Loading.dfgd..</div>;
-      // retun
-   }
+const AuthLayout = ({ children, authentication = true }: AuthLayoutProps) => {
+   const { isAuthenticated, user, isLoading, loginWithRedirect, logout } =
+      useAuth0();
+   const location = useLocation();
+
+   if (isLoading) return <Loading />;
    if (authentication && isAuthenticated !== authentication) {
       loginWithRedirect({
          appState: {
-            returnTo: location.pathname + location.search,
+            returnTo: location.pathname,
          },
       });
    }
    if (!authentication && isAuthenticated !== authentication) {
-      console.log("here");
-      navigate("/");
+      return (
+         <>
+            <Navbar
+               isLoggedIn={isAuthenticated}
+               onLogin={() => loginWithRedirect()}
+               onLogout={() => logout()}
+               user={user}
+            />
+            {children}
+         </>
+      );
    }
    if (authentication && isAuthenticated === authentication) {
-      return <>{children}</>;
+      return (
+         <>
+            <Navbar
+               isLoggedIn={isAuthenticated}
+               onLogin={() => loginWithRedirect()}
+               onLogout={() => logout()}
+               user={user}
+            />
+            {children}
+         </>
+      );
    }
 };
+
 export default AuthLayout;

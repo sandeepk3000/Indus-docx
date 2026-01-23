@@ -9,7 +9,6 @@ import Admin from "./components/pages/Admin.tsx";
 // import Carousel from "./components/pages/Carousel.tsx";
 import Login from "./components/pages/Login.tsx";
 import { Auth0Provider } from "@auth0/auth0-react";
-import AuthLayout from "./components/AuthLayout.tsx";
 
 import Test from "./components/pages/Test.tsx";
 import Live from "./components/pages/Live.tsx";
@@ -22,6 +21,8 @@ import Quiz from "./components/pages/Quiz.tsx";
 import LiveQuizManager from "./components/pages/LiveQuizManager.tsx";
 import EditTest from "./components/pages/EditTest.tsx";
 import StudentLive from "./components/pages/StudentLive.tsx";
+import AuthLayout from "./components/AuthLayout.tsx";
+import Callback from "./components/pages/Callback.tsx";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -35,7 +36,14 @@ const router = createBrowserRouter([
         path: "single-blog/:id",
         element: <SingleBlog />,
       },
-
+      {
+        path: "callback",
+        element: (
+          <AuthLayout authentication={false}>
+            <Callback />
+          </AuthLayout>
+        ),
+      },
       {
         path: "login",
         element: (
@@ -48,7 +56,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/admin",
-    element: <DashboardLayout />,
+    element: (
+      <AuthLayout authentication>
+        <DashboardLayout />
+      </AuthLayout>
+    ),
     children: [
       {
         index: true,
@@ -74,7 +86,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/student",
-    element: <DashboardLayout />,
+    element: (
+      <AuthLayout authentication>
+        <DashboardLayout />
+      </AuthLayout>
+    ),
     children: [
       {
         index: true,
@@ -110,7 +126,7 @@ const router = createBrowserRouter([
 createRoot(document.getElementById("root")!).render(
   <Auth0Provider
     domain="dev-oeemfegcvmdfmku4.us.auth0.com"
-    clientId="l5KjVAQASvrdLcCVQeJSFAmixTCg3SOj"
+    clientId="6KYYfD9aZniumn2Wu5RqoSQKqFz6g3ZY"
     authorizationParams={{
       redirect_uri:
         "https://313a2eae-d86f-4e46-b8dd-da27c7219c41-00-2igpp3ubm6gg8.sisko.replit.dev/callback",

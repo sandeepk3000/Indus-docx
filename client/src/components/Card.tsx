@@ -6,7 +6,7 @@ interface CardProps extends TestDoc {}
 const Card = ({ thumbnail, title, description }: CardProps) => {
   const { getFileView } = useMedia();
   return (
-    <Link to="/admin/leaderboards">
+    <Link to="/admin">
       <div
         className="
           bg-white rounded-lg shadow-md p-4
