@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from "react-router-dom";
+import Loading from "../Loading";
 
 export default function Login() {
   const { loginWithRedirect, isAuthenticated, user, isLoading } = useAuth0();
@@ -11,20 +12,17 @@ export default function Login() {
 
   // 🔁 LOGIN KE BAAD REDIRECT (YAHI ADD KARNA HAI)
   useEffect(() => {
-    if (isAuthenticated && roles) {
-      if (roles.includes("admin")) {
-        navigate("/admin", { replace: true });
-      } else if (roles.includes("student")) {
-        navigate("/student", { replace: true });
+    if (!isAuthenticated) {
+      alert("Please login to continue");
+      loginWithRedirect();
+    } else {
+      if (roles?.includes("admin")) {
+        navigate("/admin");
+      } else {
+        navigate("/student");
       }
     }
-  }, [isAuthenticated, roles, navigate]);
+  }, [isAuthenticated]);
 
-  if (isLoading) return <div>Loading...</div>;
-
-  return (
-    <div>
-      <button onClick={() => loginWithRedirect()}>Login with Auth0</button>
-    </div>
-  );
+  if (isLoading) return <Loading text="Loading...." />;
 }

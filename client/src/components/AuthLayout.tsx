@@ -15,6 +15,7 @@ const AuthLayout = ({ children, authentication = true }: AuthLayoutProps) => {
 
    if (isLoading) return <Loading />;
    if (authentication && isAuthenticated !== authentication) {
+      alert("Please login to access this page");
       loginWithRedirect({
          appState: {
             returnTo: location.pathname,
@@ -22,19 +23,11 @@ const AuthLayout = ({ children, authentication = true }: AuthLayoutProps) => {
       });
    }
    if (!authentication && isAuthenticated !== authentication) {
-      return (
-         <>
-            <Navbar
-               isLoggedIn={isAuthenticated}
-               onLogin={() => loginWithRedirect()}
-               onLogout={() => logout()}
-               user={user}
-            />
-            {children}
-         </>
-      );
+      alert("You are already logged in");
+      return <>{children}</>;
    }
    if (authentication && isAuthenticated === authentication) {
+      alert("You are already logged in");
       return (
          <>
             <Navbar
@@ -46,6 +39,8 @@ const AuthLayout = ({ children, authentication = true }: AuthLayoutProps) => {
             {children}
          </>
       );
+   } else {
+      return <>{children}</>;
    }
 };
 

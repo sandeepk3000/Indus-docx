@@ -4,18 +4,23 @@ import Footer from "./components/Footer";
 import { Outlet } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import { useAuth0 } from "@auth0/auth0-react";
+// find if /login not show navbar
+import { useLocation } from "react-router-dom";
 
 function App() {
+  const location = useLocation();
   const { isAuthenticated, loginWithRedirect, logout, user } = useAuth0();
   return (
     <Container className="bg-white">
       <div className="bg-green-600"></div>
-      <Navbar
-        isLoggedIn={isAuthenticated}
-        onLogin={() => loginWithRedirect()}
-        onLogout={() => logout()}
-        user={user}
-      />
+      {location.pathname !== "/login" && (
+        <Navbar
+          isLoggedIn={isAuthenticated}
+          onLogin={() => loginWithRedirect()}
+          onLogout={() => logout()}
+          user={user}
+        />
+      )}
 
       <Outlet />
       <Footer />

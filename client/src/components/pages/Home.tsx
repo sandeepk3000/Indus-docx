@@ -7,15 +7,17 @@ import { useAuth0 } from "@auth0/auth0-react";
 import useTest from "../../hooks/useTest";
 import type { TestDoc } from "../../../types";
 import Loading from "../Loading";
+import { Link } from "react-router-dom";
 import useMedia from "../../hooks/useMedia";
 
 const Home = () => {
   // const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [tests, setTests] = useState<TestDoc[]>([]);
-  const { logout, isAuthenticated } = useAuth0();
+  const { logout, isAuthenticated,  user } = useAuth0();
   const { getTest } = useTest();
   const { getFileView } = useMedia();
+  const roles = user?.["https://indusdocx.com/roles"];
 
   useEffect(() => {
     setIsLoading(true);
@@ -83,21 +85,30 @@ const Home = () => {
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {tests.map((test, index) => (
-              <div
-                key={index}
-                className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition overflow-hidden"
+              <Link
+                to={
+                  isAuthenticated
+                    ? roles?.includes("admin")
+                      ? `/admin/tests/${test.$id}/edit`
+                      : `/student/quiz/${test.$id}`
+                    : "/login"
+                }
               >
-                {/* IMAGE */}
-                <div className="relative h-40">
-                  <img
-                    src={getFileView(test.thumbnail)}
-                    alt={test.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition"
-                  />
+                <div
+                  key={index}
+                  className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition overflow-hidden"
+                >
+                  {/* IMAGE */}
+                  <div className="relative h-40">
+                    <img
+                      src={getFileView(test.thumbnail)}
+                      alt={test.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition"
+                    />
 
-                  {/* STATUS */}
-                  <span
-                    className={`absolute top-3 right-3 px-3 py-1 text-xs font-semibold rounded-full
+                    {/* STATUS */}
+                    <span
+                      className={`absolute top-3 right-3 px-3 py-1 text-xs font-semibold rounded-full
                       ${
                         test.status === "PUBLISHED"
                           ? "bg-green-500 text-white"
@@ -106,26 +117,27 @@ const Home = () => {
                             : "bg-gray-200 text-gray-700"
                       }
                     `}
-                  >
-                    {test.status}
-                  </span>
-                </div>
+                    >
+                      {test.status}
+                    </span>
+                  </div>
 
-                {/* CONTENT */}
-                <div className="p-5">
-                  <h3 className="text-lg font-semibold text-slate-900 line-clamp-1">
-                    {test.title}
-                  </h3>
+                  {/* CONTENT */}
+                  <div className="p-5">
+                    <h3 className="text-lg font-semibold text-slate-900 line-clamp-1">
+                      {test.title}
+                    </h3>
 
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Indus Docx</span>
+                    <div className="mt-4 flex items-center justify-between">
+                      <span className="text-xs text-gray-500">Indus Docx</span>
 
-                    <button className="px-4 py-1.5 text-sm rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition">
-                      Start →
-                    </button>
+                      <button className="px-4 py-1.5 text-sm rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition">
+                        Start →
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
