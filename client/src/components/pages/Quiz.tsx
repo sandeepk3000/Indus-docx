@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import useTest from "../../hooks/useTest";
 import type { TestDoc } from "../../../types";
+import { Query } from "appwrite";
 
 import Quiz from "../Quiz";
 
@@ -14,7 +15,7 @@ const QuizManager = () => {
   const [test, setTest] = useState<TestDoc | null>(null);
   const fetchTest = async (id: string) => {
     try {
-      const res = await getSingleTest(id);
+      const res = await getSingleTest(id, [Query.equal("status", "PUBLISHED")]);
       if (res) {
         setTest(res);
       }

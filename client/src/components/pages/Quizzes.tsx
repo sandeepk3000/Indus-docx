@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import useQuestion from "../../hooks/useQuestion";
 import type { QuestionDoc } from "../../../types";
 import { formatDateTime } from "../../utils/dateFormatter";
+import { Query } from "appwrite";
 
 const Quizzes = () => {
   const [activeTab, setActiveTab] = useState("latest");
@@ -18,7 +19,7 @@ const Quizzes = () => {
   const { getFileView } = useMedia();
 
   useEffect(() => {
-    getTest().then((res) => {
+    getTest([Query.equal("status", "PUBLISHED")]).then((res) => {
       if (activeTab === "latest") {
         res.rows.sort(
           (a, b) =>
@@ -37,7 +38,6 @@ const Quizzes = () => {
       });
     });
   }, [activeTab]);
-
 
   return (
     <div className="min-h-screen bg-slate-100 p-4">
