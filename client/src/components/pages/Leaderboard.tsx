@@ -1,78 +1,174 @@
 import { useState, useEffect } from "react";
 import useTest from "../../hooks/useTest";
 import type { TestDoc } from "../../../types";
+import useMedia from "../../hooks/useMedia";
+import { formatDateTime } from "../../utils/dateFormatter";
+import { Link } from "react-router-dom";
+import useQuestion from "../../hooks/useQuestion";
+import type { QuestionDoc } from "../../../types";
+import useResult from "../../hooks/useResult";
+import type { ResultDoc } from "../../../types";
+import { Query } from "appwrite";
+import { useAuth0 } from "@auth0/auth0-react";
+import Leaderboard from "../Leaderboard";
 
-const Leaderboard = () => {
+const Leaderboards = () => {
   const [search, setSearch] = useState("");
-  const [testsData, setTestsData] = useState<TestDoc[]>([]);
+  const [selectedLeaderboard, setSelectedLeaderboard] = useState<
+    ResultDoc[] | null
+  >(null);
+  const [testsData, setTestsData] = useState<TestDoc[] | null>(null);
+  const [questions, setQuestions] = useState<QuestionDoc[] | null>(null);
+  const [results, setResults] = useState<ResultDoc[] | null>(null);
+  const [activeTab, setActiveTab] = useState("latest");
+  const { user } = useAuth0();
+  const userId = user?.sub;
+  const { getResults } = useResult();
+  const { getQuestions } = useQuestion();
+  const { getFileView } = useMedia();
   const { getTest } = useTest();
+  alert("Leaderboard");
 
   useEffect(() => {
-    getTest().then((res) => {
-      setTestsData(res.rows);
+    if (!userId) {
+      alert("Please login to view your results");
+      return;
+    }
+    getResults([Query.startsWith("testCode", "LIVE")]).then((res) => {
+      if (activeTab === "latest") {
+        res.rows.sort(
+          (a, b) =>
+            new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime(),
+        );
+      } else {
+        res.rows.sort(
+          (a, b) =>
+            new Date(a.$createdAt).getTime() - new Date(b.$createdAt).getTime(),
+        );
+      }
+
+      const testIds = [...new Set(res.rows.map((result) => result.testId))];
+      getTest([Query.equal("$id", testIds)]).then((res) => {
+        console.log(res.rows[0].thumbnail);
+        alert(res.total);
+        setTestsData(res.rows);
+      });
+      getQuestions(testIds).then((res) => {
+        setQuestions(res.rows);
+      });
+      setResults(res.rows);
     });
   }, []);
-
-  const filteredTests = testsData.filter((test) =>
-    test.title.toLowerCase().includes(search.toLowerCase()),
-  );
+  const getLiveCodes = (): string[] => {
+    if (results) {
+      alert(
+        JSON.stringify(
+          [...new Set(results.map((result) => result.testCode))].length,
+        ),
+      );
+      return [...new Set(results.map((result) => result.testCode))];
+    } else {
+      return [];
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Leaderboard</h1>
+    <div>
+      {testsData &&
+        questions &&
+        !selectedLeaderboard &&
+        getLiveCodes().map((liveCode) => {
+          const totalResults = results?.filter(
+            (result) => result.testCode === liveCode,
+          );
+          if (!totalResults) return null;
+          const test = testsData?.find((test) =>
+            test.testCodes?.includes(liveCode),
+          );
+          if (!test) return null;
+          const totalQuestions = questions?.filter((question) =>
+            question.tests.includes(test?.$id),
+          );
+          const totalMarks = totalQuestions?.reduce(
+            (acc, question) => acc + Number(question.marks),
+            0,
+          );
+          if (!totalQuestions || !totalMarks) return null;
 
-        {/* Search Bar */}
-        <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Search test..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:w-96 rounded-lg border px-4 py-2 focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        {/* Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTests.map((test) => (
-            <div
-              key={test.$id}
-              className="bg-white rounded-xl border shadow-sm hover:shadow-md transition"
-            >
+          return (
+            <div className="group flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-md">
               {/* Thumbnail */}
-              <img
-                src={test.thumbnail}
-                alt={test.title}
-                className="h-40 w-full object-cover rounded-t-xl"
-              />
+              <div className="relative h-40 sm:h-44 md:h-48 w-full overflow-hidden">
+                <img
+                  src={getFileView(test.thumbnail)}
+                  alt={test.title}
+                  className="h-full w-full object-cover transition group-hover:scale-105"
+                />
+              </div>
 
               {/* Content */}
-              <div className="p-4 space-y-2">
-                <h2 className="text-lg font-semibold text-gray-800">
+              <div className="flex flex-1 flex-col p-4 sm:p-5">
+                {/* Title */}
+                <h3 className="line-clamp-1 text-base sm:text-lg font-semibold text-gray-900">
                   {test.title}
-                </h2>
+                </h3>
 
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>⏱ {test.duration} min</span>
-                  <span>📝 {0} Questions</span>
+                {/* Description */}
+                <p className="mt-1 line-clamp-2 text-sm text-gray-600">
+                  {test.description}
+                </p>
+
+                {/* Meta Info */}
+                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-lg bg-gray-50 p-2">
+                    <p className="text-xs text-gray-500">Test Code</p>
+                    <p className="font-medium text-gray-800 break-all">
+                      {totalResults[0].testCode}
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg bg-gray-50 p-2">
+                    <p className="text-xs text-gray-500">Total Students</p>
+                    <p className="font-medium text-gray-800">
+                      {totalResults.length}
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg bg-gray-50 p-2">
+                    <p className="text-xs text-gray-500">Total Marks</p>
+                    <p className="font-medium text-gray-800">{totalMarks}</p>
+                  </div>
+                  <div className="rounded-lg bg-gray-50 p-2">
+                    <p className="text-xs text-gray-500">Total Questions</p>
+                    <p className="font-medium text-gray-800">
+                      {totalQuestions.length}
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg bg-gray-50 p-2">
+                    <p className="text-xs text-gray-500">Created On</p>
+                    <p className="font-medium text-gray-800">
+                      {formatDateTime(
+                        totalResults[totalResults.length - 1].$createdAt,
+                      )}
+                    </p>
+                  </div>
                 </div>
 
-                <button className="mt-3 w-full rounded-lg bg-blue-600 py-2 text-white font-medium hover:bg-blue-700">
-                  View Leaderboard
+                {/* Action */}
+                <button
+                  onClick={() => setSelectedLeaderboard(totalResults)}
+                  className="mt-4 rounded-xl bg-black px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800"
+                >
+                  View Test
                 </button>
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* Empty State */}
-        {filteredTests.length === 0 && (
-          <p className="text-center text-gray-500 mt-10">No tests found</p>
-        )}
-      </div>
+          );
+        })}
+      {selectedLeaderboard && <Leaderboard students={selectedLeaderboard} />}
     </div>
   );
 };
-export default Leaderboard;
+
+export default Leaderboards;

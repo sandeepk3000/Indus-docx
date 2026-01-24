@@ -10,7 +10,8 @@ import useQuestion from "../../hooks/useQuestion";
 import type { QuestionDoc, ResultDoc, TestDoc } from "../../../types";
 import { formatDateTime } from "../../utils/dateFormatter";
 import gradeGenerater from "../../utils/gradeGenerater";
-
+import { useAuth0 } from "@auth0/auth0-react";
+import EmptyState from "../EmptyState";
 
 export default function StudentTest() {
   const [tests, setTests] = useState<TestDoc[] | null>(null);
@@ -20,6 +21,8 @@ export default function StudentTest() {
   const { getFileView } = useMedia();
   const { getQuestions } = useQuestion();
   const { getResults } = useResult();
+  const { user } = useAuth0();
+  const userId = user?.sub;
   const [tab, setTab] = useState("latest");
 
   // const sortedTests = [...testResults].sort((a, b) =>
@@ -29,7 +32,11 @@ export default function StudentTest() {
   // );
 
   useEffect(() => {
-    getResults([Query.equal("studentId", "1")]).then((res) => {
+    if (!userId) {
+      alert("Please login to view your results");
+      return;
+    }
+    getResults([Query.equal("studentId", userId)]).then((res) => {
       if (tab === "latest") {
         res.rows.sort(
           (a, b) =>
@@ -167,6 +174,12 @@ export default function StudentTest() {
               </div>
             );
           })}
+        {results?.length === 0 && (
+          <EmptyState
+            title="No results found"
+            description="You have not taken any tests yet"
+          />
+        )}
       </div>
     </div>
   );

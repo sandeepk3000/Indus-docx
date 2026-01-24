@@ -8,6 +8,7 @@ interface TimerProps {
 import Typo from "./Typo";
 const Timer = ({ time, isRunning, className, stop }: TimerProps) => {
   const [currentTime, setCurrentTime] = React.useState<number>(time);
+
   const [hours, setHours] = React.useState<number>(2);
   const [minutes, setMinutes] = React.useState<number>(0);
   const [seconds, setSeconds] = React.useState<number>(0);

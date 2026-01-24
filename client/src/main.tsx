@@ -5,7 +5,7 @@ import App from "./App.tsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import SingleBlog from "./components/pages/SingleBlog";
 import Home from "./components/pages/Home";
-import Admin from "./components/pages/Admin.tsx";
+
 // import Carousel from "./components/pages/Carousel.tsx";
 import Login from "./components/pages/Login.tsx";
 import { Auth0Provider } from "@auth0/auth0-react";
@@ -14,7 +14,7 @@ import Test from "./components/pages/Test.tsx";
 import Live from "./components/pages/Live.tsx";
 import Leaderboard from "./components/pages/Leaderboard.tsx";
 import DashboardLayout from "./components/DashboardLayout.tsx";
-import Student from "./components/pages/Student.tsx";
+
 import StudentTest from "./components/pages/StudentTest.tsx";
 import Quizzes from "./components/pages/Quizzes.tsx";
 import Quiz from "./components/pages/Quiz.tsx";
@@ -23,6 +23,7 @@ import EditTest from "./components/pages/EditTest.tsx";
 import StudentLive from "./components/pages/StudentLive.tsx";
 import AuthLayout from "./components/AuthLayout.tsx";
 import Callback from "./components/pages/Callback.tsx";
+import { Navigate } from "react-router-dom";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -64,7 +65,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Admin />,
+        element: <Navigate to="live" replace />,
       },
       {
         path: "tests",
@@ -94,7 +95,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Student />,
+        element: <Navigate to="live" replace />,
       },
       {
         path: "tests",

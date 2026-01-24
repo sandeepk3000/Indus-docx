@@ -38,6 +38,7 @@ const Quizzes = () => {
     });
   }, [activeTab]);
 
+
   return (
     <div className="min-h-screen bg-slate-100 p-4">
       <div className="max-w-7xl mx-auto">
@@ -101,6 +102,7 @@ const Quizzes = () => {
                           return acc + Number(question.marks);
                         }, 0)}{" "}
                     </span>
+                    <span>⏳ Duration: {test.duration} mins</span>
                   </div>
                 </div>
               </div>

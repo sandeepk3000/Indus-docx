@@ -6,6 +6,7 @@ import useTest from "../hooks/useTest";
 import useMedia from "../hooks/useMedia";
 import { ID } from "appwrite";
 import type { TestDoc, Test } from "../../types";
+import { useAuth0 } from "@auth0/auth0-react";
 
 export interface TestFormValues extends Omit<Test, "thumbnail"> {
   thumbnail: FileList | null;
@@ -16,11 +17,14 @@ interface TestFormProps {
 }
 const TestForm = ({ onTestSubmit, test }: TestFormProps) => {
   const { createTest, updateTest } = useTest();
+  const { user } = useAuth0();
+  const userId = user?.sub;
   const { upload, deleteFile, getFileView } = useMedia();
   const {
     control,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm<TestFormValues>({
     defaultValues: {
       title: test?.title || "",
@@ -35,9 +39,12 @@ const TestForm = ({ onTestSubmit, test }: TestFormProps) => {
   });
 
   const onSubmit = async (data: TestFormValues) => {
+    if (!userId) {
+      alert("Please login to create a test");
+      return;
+    }
     try {
       if (test) {
-        console.log("update test");
         const thumbnail = data.thumbnail?.[0]
           ? await upload(data.thumbnail[0])
           : null;
@@ -51,7 +58,7 @@ const TestForm = ({ onTestSubmit, test }: TestFormProps) => {
           thumbnail: thumbnail?.$id || test.thumbnail,
         });
         if (updatedTest) {
-          alert("test updated");
+          alert("Test updated successfully");
           onTestSubmit(true);
         }
       } else {
@@ -62,18 +69,32 @@ const TestForm = ({ onTestSubmit, test }: TestFormProps) => {
             const test = await createTest({
               ...data,
               $id: ID.unique(),
-              userId: "695e2dcc002e7344aebe",
+              userId: userId,
               thumbnail: thumbnailRes.$id,
             });
-            console.log("test");
             console.log(test);
             if (test) {
+              alert("Test created successfully");
               onTestSubmit(true);
             }
           }
         }
       }
-    } catch (err: unknown) {}
+      reset({
+        title: "",
+        description: "",
+        duration: "",
+        thumbnail: null,
+        status: "PUBLISHED",
+        access: "PUBLIC",
+        userId: "",
+        $id: "",
+      });
+    } catch (err: unknown) {
+      // show error messag in alter
+      alert("something went wrong");
+      throw err;
+    }
   };
 
   return (

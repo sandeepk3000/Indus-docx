@@ -7,10 +7,9 @@ import Leaderboard from "./Leaderboard";
 import useQuestion from "./../hooks/useQuestion";
 import useResult from "./../hooks/useResult";
 import useTest from "./../hooks/useTest";
-
-import gradeGenerater from "./../utils/gradeGenerater";
-import percentageGenerater from "./../utils/percentageGenerater";
+import SpinnerButton from "./SpinnerButton";
 import type { QuestionDoc, TestDoc, ResultDoc, Result } from "./../../types";
+import { useAuth0 } from "@auth0/auth0-react";
 
 interface YourAnswer {
   questionId: string;
@@ -27,6 +26,8 @@ interface QuizProps {
 }
 
 const Quiz = ({ test, testCode }: QuizProps) => {
+  const { user } = useAuth0();
+  const userId = user?.sub;
   const { getQuestions } = useQuestion();
   const { createResult, getResult } = useResult();
   const { pushTestCode } = useTest();
@@ -38,11 +39,14 @@ const Quiz = ({ test, testCode }: QuizProps) => {
 
   const ref = useRef<HTMLDivElement>(null);
   const [isSticky, setIsSticky] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (test) {
+      setIsLoading(true);
       getQuestions([test.$id]).then((res) => {
         setQuestions(res.rows);
+        setIsLoading(false);
       });
     }
   }, [test]);
@@ -61,7 +65,6 @@ const Quiz = ({ test, testCode }: QuizProps) => {
 
   const handleStopTimer = (flag: boolean) => {
     if (flag) setIsTimerStop(true);
-    console.log("Timer stopped");
   };
 
   useEffect(() => {
@@ -69,13 +72,16 @@ const Quiz = ({ test, testCode }: QuizProps) => {
   }, [isTimerStop]);
 
   const handleSubmit = async () => {
-    console.log("Submitted");
+    setIsLoading(true);
+    if (!userId) {
+      alert("Please login to submit the test");
+      return;
+    }
     const checkedAnswers: CheckedAnswer[] | undefined = questions?.map(
       (question) => {
         const yourAnswer = yourAnswers.find(
           (answer) => answer.questionId === question.$id,
         );
-        console.log(yourAnswer);
         if (yourAnswer) {
           return {
             ...question,
@@ -91,9 +97,6 @@ const Quiz = ({ test, testCode }: QuizProps) => {
         };
       },
     );
-    console.log("checkedAnswers");
-    console.log(checkedAnswers);
-
     if (checkedAnswers && questions) {
       const totalMarks: number = questions.reduce(
         (acc: number, question) => acc + Number(question.marks),
@@ -123,10 +126,9 @@ const Quiz = ({ test, testCode }: QuizProps) => {
           answer.isCorrect ? acc + Number(answer.marks) : acc,
         0,
       );
-
       const r: Result = {
         $id: ID.unique(),
-        studentId: "1",
+        studentId: userId,
         testId: test?.$id || "",
         checkedAnswers: [JSON.stringify(checkedAnswers)],
         totalMarks,
@@ -139,17 +141,22 @@ const Quiz = ({ test, testCode }: QuizProps) => {
       };
       console.log(r);
 
-      const res = await createResult(r);
-
-      getResult(res.$id).then(async (res) => {
-        if (res) {
-          setResult(res);
+      try {
+        const res = await createResult(r);
+        const result = await getResult(res.$id);
+        if (result) {
+          setResult(result);
           if (!testCode) {
-            await pushTestCode(res.testId, res.testCode);
+            await pushTestCode(result.testId, result.testCode);
             alert("Test submitted successfully");
+            setIsLoading(false);
           }
         }
-      });
+      } catch (err) {
+        // custom error
+        alert("Error submitting test");
+        setIsLoading(false);
+      }
     }
   };
 
@@ -220,18 +227,61 @@ const Quiz = ({ test, testCode }: QuizProps) => {
                 </div>
 
                 {/* SUBMIT */}
-                {!isTimerStop && (
-                  <Button
-                    className="bg-blue-600 hover:bg-blue-700
-                               border border-blue-700
-                               text-white px-5 py-2 rounded-lg
-                               font-semibold shadow-sm shrink-0"
-                    onClick={handleSubmit}
-                  >
-                    Submit
-                  </Button>
-                )}
+
+                <SpinnerButton
+                  onClick={handleSubmit}
+                  className="bg-blue-600 hover:bg-blue-700
+                      border border-blue-700
+                      text-white px-5 py-2 rounded-lg
+                      font-semibold shadow-sm shrink-0"
+                  loading={isLoading}
+                >
+                  {" "}
+                  Submit
+                </SpinnerButton>
               </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            <div className="rounded-2xl border bg-white p-4 sm:p-5 shadow-sm transition hover:shadow-md">
+              <div className="flex items-center justify-between">
+                <span className="text-xs sm:text-sm font-medium text-gray-500">
+                  Total Questions
+                </span>
+                <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-blue-50 text-blue-600 text-sm sm:text-base">
+                  📝
+                </div>
+              </div>
+              <p className="mt-3 sm:mt-4 text-2xl sm:text-3xl font-semibold text-gray-900">
+                {questions?.length}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border bg-white p-4 sm:p-5 shadow-sm transition hover:shadow-md">
+              <div className="flex items-center justify-between">
+                <span className="text-xs sm:text-sm font-medium text-gray-500">
+                  Total Marks
+                </span>
+                <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-green-50 text-green-600 text-sm sm:text-base">
+                  ⭐
+                </div>
+              </div>
+              <p className="mt-3 sm:mt-4 text-2xl sm:text-3xl font-semibold text-gray-900">
+                {questions?.reduce((acc, q) => acc + Number(q.marks), 0)}
+              </p>
+            </div>
+            <div className="rounded-2xl border bg-white p-4 sm:p-5 shadow-sm transition hover:shadow-md">
+              <div className="flex items-center justify-between">
+                <span className="text-xs sm:text-sm font-medium text-gray-500">
+                  Test Code
+                </span>
+                <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-purple-50 text-purple-600 text-sm sm:text-base">
+                  🧾
+                </div>
+              </div>
+              <p className="mt-3 sm:mt-4 text-xl sm:text-2xl lg:text-3xl font-semibold tracking-wide text-gray-900 break-all">
+                {testCode}
+              </p>
             </div>
           </div>
 
@@ -294,24 +344,7 @@ const Quiz = ({ test, testCode }: QuizProps) => {
           </div>
         </div>
       ) : (
-        <Leaderboard
-          students={[
-            {
-              name: "John Doe",
-              email: "john@gmail.com",
-              img: "https://randomuser.me/api/portraits/men/1.jpg",
-              totalMarks: result.totalMarks,
-              totalCorrect: result.totalCorrect,
-              percentage: percentageGenerater(
-                result.obtainedMarks,
-                result.totalMarks,
-              ),
-              grade: gradeGenerater(
-                percentageGenerater(result.obtainedMarks, result.totalMarks),
-              ),
-            },
-          ]}
-        />
+        <Leaderboard students={[result]} />
       )}
     </div>
   );

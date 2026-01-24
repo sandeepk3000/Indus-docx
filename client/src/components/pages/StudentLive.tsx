@@ -10,6 +10,8 @@ import useQuestion from "../../hooks/useQuestion";
 import type { QuestionDoc, ResultDoc } from "../../../types";
 import useResult from "../../hooks/useResult";
 import { formatDateTime } from "../../utils/dateFormatter";
+import { useAuth0 } from "@auth0/auth0-react";
+import EmptyState from "../EmptyState";
 
 // const tests = [
 //   {
@@ -35,28 +37,33 @@ import { formatDateTime } from "../../utils/dateFormatter";
 // ];
 
 export default function LiveTestManager() {
+  // find user id
+  const { user } = useAuth0();
+  const userId = user?.sub;
+
   const [activeTab, setActiveTab] = useState("live");
   const [results, setResults] = useState<ResultDoc[] | null>(null);
   const [liveTests, setLiveTests] = useState<TestDoc[] | null>(null);
   const [questions, setQuestions] = useState<QuestionDoc[] | null>(null);
   const { getTest, getSingleTest } = useTest();
   const navigate = useNavigate();
-  const { getResults } = useResult();
+  const { getResults} = useResult();
   const { getQuestions } = useQuestion();
 
   const { getFileView } = useMedia();
 
   const [liveTab, setLiveTab] = useState("latest");
-  const [liveCode, setLiveCode] = useState("");
+  const [liveCode, setLiveCode] = useState<string | null>(null);
   useEffect(() => {
+    if (!userId) {
+      alert("Please login to view your Live results");
+      return;
+    }
     if (activeTab === "live") {
       getResults([
-        Query.equal("studentId", "1"),
+        Query.equal("studentId", userId),
         Query.startsWith("testCode", "LIVE"),
       ]).then((res) => {
-        console.log("livedfsdfasdfsfLIVEDFFSDFASDFAD");
-        console.log(res.total);
-        console.log(liveTab);
         if (liveTab === "latest") {
           res.rows.sort(
             (a, b) =>
@@ -83,22 +90,49 @@ export default function LiveTestManager() {
             setQuestions(res.rows);
           });
         }
-        console.log(res.rows[0].testCode);
+
         setResults(res.rows);
       });
     }
   }, [liveTab]);
 
   const handleLiveJoin = async () => {
-    if (!liveCode.startsWith("LIVE")) {
+    if (!userId) {
+      alert("Please login to join live test");
+      return;
+    }
+    if (!liveCode?.startsWith("LIVE")) {
       alert("Test Code must start with LIVE");
       return;
     }
-    const testId = liveCode.split(":")[1];
+    const testId: string | undefined = liveCode?.split(":")[1];
+    if (!testId) {
+      alert("Test is not found");
+      return;
+    }
+
+    const expiry: string | undefined = liveCode?.split(":")[2];
+    if (expiry) {
+      const expiryTime = Number(expiry);
+      const currentTime = new Date().getTime();
+      if (currentTime > expiryTime) {
+        alert("Test Code is expired");
+        return;
+      }
+    }
     const test = await getSingleTest(testId);
     const isCodeExist = test?.testCodes?.includes(liveCode);
     if (!isCodeExist) {
       alert("This Live code not exits");
+      return;
+    }
+    const existResults = await getResults([
+      Query.equal("testCode", liveCode),
+      Query.equal("studentId", userId),
+    ]);
+    alert(existResults.total);
+    if (existResults.total > 0) {
+      alert("You have already used this test");
       return;
     }
     navigate(`/student/live/quiz/${testId}?liveCode=${liveCode}`);
@@ -120,7 +154,7 @@ export default function LiveTestManager() {
           <button
             onClick={() => setActiveTab("join")}
             className={`px-6 py-2 rounded-lg font-semibold ${
-              activeTab === "create" ? "bg-green-600 text-white" : "bg-gray-200"
+              activeTab === "join" ? "bg-green-600 text-white" : "bg-gray-200"
             }`}
           >
             Join
@@ -246,6 +280,12 @@ export default function LiveTestManager() {
                     </div>
                   );
                 })}
+              {results?.length === 0 && (
+                <EmptyState
+                  title="No results found"
+                  description="You have not taken any tests yet"
+                />
+              )}
             </div>
           </div>
         )}
@@ -257,7 +297,6 @@ export default function LiveTestManager() {
               <input
                 type="text"
                 placeholder={`Live Code (e.g. LIVE03:testId)`}
-                value={liveCode}
                 onChange={(e) => setLiveCode(e.target.value)}
                 className="w-full border rounded px-3 py-2 mb-2"
               />

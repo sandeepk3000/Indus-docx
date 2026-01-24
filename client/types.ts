@@ -47,15 +47,12 @@ export interface Attempt {
   startTime: Date;
   submitted: boolean;
 }
-export interface LeaderboardProps {
-  name: string;
-  email: string;
-  img: string;
-  totalMarks: number;
-  totalCorrect: number;
-  percentage: number;
-  rank?: number;
-  grade: string;
+export interface LeaderboardProps extends ResultDoc {
+  name?: string;
+  email?: string;
+  img?: string;
+  percentage?: number;
+  grade?: string;
 }
 
 export interface AppwriteBase {

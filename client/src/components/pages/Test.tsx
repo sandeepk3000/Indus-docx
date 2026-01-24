@@ -5,6 +5,7 @@ import useMedia from "../../hooks/useMedia";
 import useQuestion from "../../hooks/useQuestion";
 import type { QuestionDoc } from "../../../types";
 import TestForm from "../TestForm";
+import { useNavigate } from "react-router-dom";
 
 const Test = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -13,6 +14,7 @@ const Test = () => {
   const { getTest } = useTest();
   const [isTestCreated, setIsTestCreated] = useState<boolean>(false);
   const { getQuestions } = useQuestion();
+  const navigate = useNavigate();
   const { getFileView } = useMedia();
 
   const onTestSubmit = async (isTestCreated: boolean) => {
@@ -106,7 +108,10 @@ const Test = () => {
                 </div>
 
                 <div className="flex gap-3 mt-4">
-                  <button className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                  <button
+                    className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+                    onClick={() => navigate(`/admin/test/${test.$id}/edit`)}
+                  >
                     Edit
                   </button>
                   <button className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700">

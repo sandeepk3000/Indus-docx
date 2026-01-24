@@ -1,6 +1,7 @@
-
 import { type LeaderboardProps } from "../../types";
 import Typo from "./Typo";
+import percentageGenerater from "../utils/percentageGenerater";
+import gradeGenerater from "../utils/gradeGenerater";
 
 const Leaderboard = ({ students }: { students: LeaderboardProps[] }) => {
   return (
@@ -32,15 +33,15 @@ const Leaderboard = ({ students }: { students: LeaderboardProps[] }) => {
 
           <div className="flex items-center gap-3 md:p-3">
             <img
-              src={student.img}
-              alt={student.name}
+              src={"https://randomuser.me/api/portraits/men/1.jpg"}
+              alt=""
               className="w-10 h-10 rounded-full "
             />
             <div className="text-left">
               <Typo className="text-gray-800 text-sm font-medium">
-                {student.name}
+                {"John Doe"}
               </Typo>
-              <Typo className="text-gray-500 text-xs">{student.email}</Typo>
+              <Typo className="text-gray-500 text-xs">{"john@gmail.com"}</Typo>
             </div>
           </div>
 
@@ -57,12 +58,16 @@ const Leaderboard = ({ students }: { students: LeaderboardProps[] }) => {
 
           <div className="flex justify-between md:block md:p-3">
             <span className="md:hidden text-gray-500">Percentage</span>
-            <span>{`${student.percentage}%`}</span>
+            <span>{`${percentageGenerater(student.obtainedMarks, student.totalMarks)}%`}</span>
           </div>
 
           <div className="flex justify-between md:block md:p-3 font-bold text-green-600">
             <span className="md:hidden text-gray-500">Grade</span>
-            <span>{student.grade}</span>
+            <span>
+              {gradeGenerater(
+                (student.obtainedMarks / student.totalMarks) * 100,
+              )}
+            </span>
           </div>
         </div>
       ))}

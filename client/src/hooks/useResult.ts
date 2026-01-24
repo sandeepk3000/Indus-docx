@@ -45,7 +45,7 @@ const useResult = () => {
     }
   };
   const getResults = async (
-    query: string[],
+    query?: string[],
   ): Promise<Models.RowList<ResultDoc>> => {
     console.log(query);
     try {
