@@ -14,7 +14,7 @@ const Home = () => {
   // const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [tests, setTests] = useState<TestDoc[]>([]);
-  const { logout, isAuthenticated,  user } = useAuth0();
+  const { logout, isAuthenticated, user } = useAuth0();
   const { getTest } = useTest();
   const { getFileView } = useMedia();
   const roles = user?.["https://indusdocx.com/roles"];
@@ -90,7 +90,9 @@ const Home = () => {
                   isAuthenticated
                     ? roles?.includes("admin")
                       ? `/admin/tests/${test.$id}/edit`
-                      : `/student/quiz/${test.$id}`
+                      : test.status === "UPCOMING"
+                        ? "/"
+                        : `/student/quiz/${test.$id}`
                     : "/login"
                 }
               >
@@ -127,6 +129,9 @@ const Home = () => {
                     <h3 className="text-lg font-semibold text-slate-900 line-clamp-1">
                       {test.title}
                     </h3>
+                    <p className="mt-1 text-sm text-gray-600 line-clamp-2">
+                      {test.description}
+                    </p>
 
                     <div className="mt-4 flex items-center justify-between">
                       <span className="text-xs text-gray-500">Indus Docx</span>
