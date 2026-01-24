@@ -3,7 +3,7 @@ import useTest from "../../hooks/useTest";
 import type { TestDoc } from "../../../types";
 import useMedia from "../../hooks/useMedia";
 import { formatDateTime } from "../../utils/dateFormatter";
-import { Link } from "react-router-dom";
+
 import useQuestion from "../../hooks/useQuestion";
 import type { QuestionDoc } from "../../../types";
 import useResult from "../../hooks/useResult";
@@ -13,14 +13,13 @@ import { useAuth0 } from "@auth0/auth0-react";
 import Leaderboard from "../Leaderboard";
 
 const Leaderboards = () => {
-  const [search, setSearch] = useState("");
   const [selectedLeaderboard, setSelectedLeaderboard] = useState<
     ResultDoc[] | null
   >(null);
   const [testsData, setTestsData] = useState<TestDoc[] | null>(null);
   const [questions, setQuestions] = useState<QuestionDoc[] | null>(null);
   const [results, setResults] = useState<ResultDoc[] | null>(null);
-  const [activeTab, setActiveTab] = useState("latest");
+  const activeTab = "latest";
   const { user } = useAuth0();
   const userId = user?.sub;
   const { getResults } = useResult();
