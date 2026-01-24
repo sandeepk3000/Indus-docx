@@ -166,4 +166,4 @@ const Leaderboards = () => {
   );
 };
 
-ex^port default Leaderboards;
+export default Leaderboards;
