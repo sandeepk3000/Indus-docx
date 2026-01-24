@@ -27,7 +27,6 @@ const Leaderboards = () => {
   const { getFileView } = useMedia();
   const { getTest } = useTest();
 
-
   useEffect(() => {
     if (!userId) {
       alert("Please login to view your results");
@@ -49,7 +48,7 @@ const Leaderboards = () => {
       const testIds = [...new Set(res.rows.map((result) => result.testId))];
       getTest([Query.equal("$id", testIds)]).then((res) => {
         console.log(res.rows[0].thumbnail);
-        
+
         setTestsData(res.rows);
       });
       getQuestions(testIds).then((res) => {
@@ -60,7 +59,6 @@ const Leaderboards = () => {
   }, []);
   const getLiveCodes = (): string[] => {
     if (results) {
-      
       return [...new Set(results.map((result) => result.testCode))];
     } else {
       return [];
@@ -165,5 +163,4 @@ const Leaderboards = () => {
     </div>
   );
 };
-
 export default Leaderboards;
