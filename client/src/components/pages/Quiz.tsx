@@ -10,16 +10,17 @@ import { codeGenerater } from "../../utils/codeGenerater";
 const QuizManager = () => {
   // query parameters  how ge
   const { id } = useParams();
-  const { getSingleTest } = useTest();
+  const { getTest } = useTest();
   const [testCode, setTestCode] = useState<string | null>(null);
   const [test, setTest] = useState<TestDoc | null>(null);
   const fetchTest = async (id: string) => {
     try {
-      const res = await getSingleTest(id, [
+      const res = await getTest([
+        Query.equal("$id", id),
         Query.equal("status", ["PUBLISHED"]),
       ]);
       if (res) {
-        setTest(res);
+        setTest(res.rows[0]);
       }
       console.log(res);
     } catch (err: unknown) {
