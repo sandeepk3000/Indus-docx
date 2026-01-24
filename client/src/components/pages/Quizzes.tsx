@@ -19,7 +19,7 @@ const Quizzes = () => {
   const { getFileView } = useMedia();
 
   useEffect(() => {
-    getTest([Query.equal("status", "PUBLISHED")]).then((res) => {
+    getTest([Query.equal("status", ["PUBLISHED"])]).then((res) => {
       if (activeTab === "latest") {
         res.rows.sort(
           (a, b) =>

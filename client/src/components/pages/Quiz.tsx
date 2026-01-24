@@ -15,12 +15,15 @@ const QuizManager = () => {
   const [test, setTest] = useState<TestDoc | null>(null);
   const fetchTest = async (id: string) => {
     try {
-      const res = await getSingleTest(id, [Query.equal("status", "PUBLISHED")]);
+      const res = await getSingleTest(id, [
+        Query.equal("status", ["PUBLISHED"]),
+      ]);
       if (res) {
         setTest(res);
       }
       console.log(res);
     } catch (err: unknown) {
+      alert(JSON.stringify(err));
       alert("something went wrong");
       throw err;
     }
