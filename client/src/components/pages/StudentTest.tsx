@@ -10,6 +10,7 @@ import useQuestion from "../../hooks/useQuestion";
 import type { QuestionDoc, ResultDoc, TestDoc } from "../../../types";
 import { formatDateTime } from "../../utils/dateFormatter";
 import gradeGenerater from "../../utils/gradeGenerater";
+import percentageGenerater from "../../utils/percentageGenerater";
 import { useAuth0 } from "@auth0/auth0-react";
 import EmptyState from "../EmptyState";
 
@@ -133,7 +134,9 @@ export default function StudentTest() {
 
                   {/* Grade (always visible) */}
                   <span className="h-fit px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-600 font-semibold">
-                    {gradeGenerater((result.obtainedMarks / totalMarks) * 100)}
+                    {gradeGenerater(
+                      percentageGenerater(result.obtainedMarks, totalMarks),
+                    )}
                   </span>
                 </div>
 
@@ -164,9 +167,7 @@ export default function StudentTest() {
                   <div className="hidden lg:block">
                     <Stat
                       label="Score %"
-                      value={`${Math.round(
-                        (result.obtainedMarks / totalMarks) * 100,
-                      )}%`}
+                      value={`${percentageGenerater(result.obtainedMarks, totalMarks)}%`}
                       color="text-blue-600"
                     />
                   </div>
