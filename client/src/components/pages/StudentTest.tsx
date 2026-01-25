@@ -54,10 +54,22 @@ export default function StudentTest() {
         console.log(res.rows[0].thumbnail);
         setTests(res.rows);
       });
-      getQuestions(testIds).then((res) => {
-        console.log(res.rows);
-        setQuestions(res.rows);
+      testIds.map((testId) => {
+        const isExistQuestion = questions?.find((question) =>
+          question.tests.includes(testId),
+        );
+        if (!isExistQuestion) {
+          getQuestions([testId]).then((res) => {
+            setQuestions((prev) => {
+              if (prev) {
+                return [...prev, ...res.rows];
+              }
+              return res.rows;
+            });
+          });
+        }
       });
+
       setResults(res.rows);
     });
   }, [tab]);

@@ -26,8 +26,16 @@ const Test = () => {
   useEffect(() => {
     getTest().then((res) => {
       setTests(res.rows);
-      getQuestions(res.rows.map((test) => test.$id)).then((res) => {
-        setQuestions(res.rows);
+
+      res.rows.map((test) => {
+        const isExistQuestion = questions.find((question) =>
+          question.tests.includes(test.$id),
+        );
+        if (!isExistQuestion) {
+          getQuestions([test.$id]).then((res) => {
+            setQuestions((prev) => [...prev, ...res.rows]);
+          });
+        }
       });
     });
   }, [isTestCreated]);
