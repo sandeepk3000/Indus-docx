@@ -40,7 +40,7 @@ const Home = () => {
 
         <div className="relative z-10 text-center px-4 max-w-3xl">
           <span className="inline-block mb-3 px-4 py-1 text-xs tracking-wider uppercase rounded-full bg-white/10 text-white">
-            Welcome to Indus Docx
+            Welcome to Indus Docx (Developed by Sandeep)
           </span>
 
           <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight">
