@@ -6,6 +6,7 @@ import useQuestion from "../../hooks/useQuestion";
 import type { QuestionDoc } from "../../../types";
 import TestForm from "../TestForm";
 import { useNavigate } from "react-router-dom";
+import { Query } from "appwrite";
 
 const Test = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -23,21 +24,21 @@ const Test = () => {
       setIsTestCreated(true);
     }
   };
+  const fetchTestsAndQuestions = async () => {
+    try {
+      const res = await getTest();
+      const getQuestionQueries = res.rows.map((test) =>
+        Query.contains("tests", test.$id),
+      );
+      const questions = await getQuestions([Query.or(getQuestionQueries)]);
+      setQuestions(questions.rows);
+      setTests(res.rows);  
+    } catch (err) {
+      alert(err);
+    }
+  };
   useEffect(() => {
-    getTest().then((res) => {
-      setTests(res.rows);
-
-      res.rows.map((test) => {
-        const isExistQuestion = questions.find((question) =>
-          question.tests.includes(test.$id),
-        );
-        if (!isExistQuestion) {
-          getQuestions([test.$id]).then((res) => {
-            setQuestions((prev) => [...prev, ...res.rows]);
-          });
-        }
-      });
-    });
+    fetchTestsAndQuestions();
   }, [isTestCreated]);
 
   return (

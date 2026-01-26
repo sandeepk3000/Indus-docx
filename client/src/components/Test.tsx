@@ -32,7 +32,9 @@ const Tests = () => {
       const getQuestionQueries = res.rows.map((test) =>
         Query.equal("tests", test.$id),
       );
+      alert(JSON.stringify(getQuestionQueries));
       getQuestions(getQuestionQueries).then((res) => {
+        alert(JSON.stringify(res.rows));
         setQuestions(res.rows);
       });
       setTests(res.rows);
