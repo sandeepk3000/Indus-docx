@@ -7,7 +7,7 @@ const Footer = () => {
 
     <footer className="bg-neutral-900 mt-8 text-white py-4">
       <div className="container mx-auto text-center">
-        <p className="text-sm">© 2026 Indus Docx. All rights reserved. (Developed by Sandeep)</p>
+        <p className="text-sm">© 2024 Indus Docx. All rights reserved.</p>
       </div>
     </footer>
   );
