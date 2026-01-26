@@ -51,10 +51,7 @@ const Leaderboards = () => {
         setTestsData(res.rows);
       });
 
-      const getQuestionQueries = testIds.map((testId) =>
-        Query.equal("tests", testId),
-      );
-      getQuestions(getQuestionQueries).then((res) => {
+      getQuestions(testIds).then((res) => {
         setQuestions(res.rows);
       });
       setResults(res.rows);
