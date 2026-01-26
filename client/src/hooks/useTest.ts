@@ -53,7 +53,6 @@ const useTest = () => {
   };
   const updateTest = async (test: Test): Promise<TestDoc> => {
     try {
-      console.log("updateTest-------");
       console.log(test);
       const { $id, ...other } = test;
       const response = await database.updateRow<TestDoc>({

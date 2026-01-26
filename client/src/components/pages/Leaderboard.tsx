@@ -46,27 +46,17 @@ const Leaderboards = () => {
       }
 
       const testIds = [...new Set(res.rows.map((result) => result.testId))];
-      getTest([Query.equal("$id", testIds)]).then((res) => {
-        console.log(res.rows[0].thumbnail);
-
+      const testQueries = testIds.map((testId) => Query.equal("$id", testId));
+      getTest(testQueries).then((res) => {
         setTestsData(res.rows);
       });
-      testIds.map((testId) => {
-        const isExistQuestion = questions?.find((question) =>
-          question.tests.includes(testId),
-        );
-        if (!isExistQuestion) {
-          getQuestions([testId]).then((res) => {
-            setQuestions((prev) => {
-              if (prev) {
-                return [...prev, ...res.rows];
-              }
-              return res.rows;
-            });
-          });
-        }
-      });
 
+      const getQuestionQueries = testIds.map((testId) =>
+        Query.equal("tests", testId),
+      );
+      getQuestions(getQuestionQueries).then((res) => {
+        setQuestions(res.rows);
+      });
       setResults(res.rows);
     });
   }, []);

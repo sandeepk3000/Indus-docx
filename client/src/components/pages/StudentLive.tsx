@@ -80,24 +80,17 @@ export default function LiveTestManager() {
         const testIds = [...new Set(res.rows.map((result) => result.testId))];
         console.log(testIds);
         if (testIds.length > 0) {
-          getTest([Query.equal("$id", testIds)]).then((res) => {
-            console.log("t", res.rows[0].title);
+          const testQueries = testIds.map((testId) =>
+            Query.equal("$id", testId),
+          );
+          getTest(testQueries).then((res) => {
             setLiveTests(res.rows);
           });
-          testIds.map((testId) => {
-            const isExistQuestion = questions?.find((question) =>
-              question.tests.includes(testId),
-            );
-            if (!isExistQuestion) {
-              getQuestions([testId]).then((res) => {
-                setQuestions((prev) => {
-                  if (prev) {
-                    return [...prev, ...res.rows];
-                  }
-                  return res.rows;
-                });
-              });
-            }
+          const questionQueries = testIds.map((testId) =>
+            Query.contains("tests", testId),
+          );
+          getQuestions(questionQueries).then((res) => {
+            setQuestions(res.rows);
           });
         }
 

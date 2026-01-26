@@ -7,6 +7,7 @@ import useTest from "../hooks/useTest";
 import TestFrom from "./TestForm";
 import useMedia from "../hooks/useMedia";
 import useQuestion from "../hooks/useQuestion";
+import { Query } from "appwrite";
 import type { TestDoc, QuestionDoc } from "../../types";
 // interface TestProps {
 //   onAddTest?: () => void;
@@ -28,13 +29,16 @@ const Tests = () => {
   const fetchTest = async () => {
     try {
       const res = await getTest();
-      const questions = await getQuestions(res.rows.map((row) => row.$id));
-      if (res && questions) {
-        setTests(res.rows);
-        setQuestions(questions.rows);
-      }
+      const getQuestionQueries = res.rows.map((test) =>
+        Query.equal("tests", test.$id),
+      );
+      getQuestions(getQuestionQueries).then((res) => {
+        setQuestions(res.rows);
+      });
+      setTests(res.rows);
     } catch (err: unknown) {
-      console.log("error");
+      alert("error");
+      throw err;
       // console.log(err);
     }
   };

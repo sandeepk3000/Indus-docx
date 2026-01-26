@@ -75,21 +75,21 @@ const TestForm = ({ onTestSubmit, test }: TestFormProps) => {
             console.log(test);
             if (test) {
               alert("Test created successfully");
+              reset({
+                title: "",
+                description: "",
+                duration: "",
+                thumbnail: null,
+                status: "PUBLISHED",
+                access: "PUBLIC",
+                userId: "",
+                $id: "",
+              });
               onTestSubmit(true);
             }
           }
         }
       }
-      reset({
-        title: "",
-        description: "",
-        duration: "",
-        thumbnail: null,
-        status: "PUBLISHED",
-        access: "PUBLIC",
-        userId: "",
-        $id: "",
-      });
     } catch (err: unknown) {
       // show error messag in alter
       alert("something went wrong");

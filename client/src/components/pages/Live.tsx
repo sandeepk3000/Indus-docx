@@ -8,6 +8,7 @@ import useQuestion from "../../hooks/useQuestion";
 import { codeGenerater } from "../../utils/codeGenerater";
 import type { QuestionDoc } from "../../../types";
 import { formatDateTime } from "../../utils/dateFormatter";
+import { Query } from "appwrite";
 
 // const tests = [
 //   {
@@ -53,15 +54,11 @@ export default function LiveTestManager() {
             test.testCodes?.some((code) => code.startsWith(`LIVE`)),
           ),
         );
-        res.rows.map((test) => {
-          const isExistQuestion = questions.find((question) =>
-            question.tests.includes(test.$id),
-          );
-          if (!isExistQuestion) {
-            getQuestions([test.$id]).then((res) => {
-              setQuestions((prev) => [...prev, ...res.rows]);
-            });
-          }
+        const questionQueries = res.rows.map((test) =>
+          Query.equal("$id", test.$id),
+        );
+        getQuestions(questionQueries).then((res) => {
+          setQuestions(res.rows);
         });
       } else {
         setTests(res.rows);

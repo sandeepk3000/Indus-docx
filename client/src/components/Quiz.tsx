@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import Button from "./Button";
-import { ID } from "appwrite";
+import { ID, Query } from "appwrite";
 import Typo from "./Typo";
 import Timer from "./Timer";
 import Leaderboard from "./Leaderboard";
 import useQuestion from "./../hooks/useQuestion";
 import useResult from "./../hooks/useResult";
 import useTest from "./../hooks/useTest";
+
 import SpinnerButton from "./SpinnerButton";
 import type { QuestionDoc, TestDoc, ResultDoc, Result } from "./../../types";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -44,7 +45,7 @@ const Quiz = ({ test, testCode }: QuizProps) => {
   useEffect(() => {
     if (test) {
       setIsLoading(true);
-      getQuestions([test.$id]).then((res) => {
+      getQuestions([Query.contains("tests", test.$id)]).then((res) => {
         setQuestions(res.rows);
         setIsLoading(false);
       });

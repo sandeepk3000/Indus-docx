@@ -2,6 +2,7 @@ import Input from "./Input";
 import Select from "./Select";
 import { useEffect, useState, useRef } from "react";
 import { v4 as uuid } from "uuid";
+import { Query } from "appwrite";
 import Button from "./Button";
 import { Controller, useForm, type SubmitHandler } from "react-hook-form";
 // import { type TestFormValues } from "./TestForm";
@@ -87,6 +88,14 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
         });
       }
     }
+    setValue("$id", "");
+    setValue("title", "");
+    setValue("optionA", "");
+    setValue("optionB", "");
+    setValue("optionC", "");
+    setValue("optionD", "");
+    setValue("correctAnswer", "");
+    setValue("marks", "");
   };
   const editQuestion = ($id: string) => {
     setEdit(true);
@@ -108,24 +117,14 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
       isFirstRender.current = false;
       return;
     }
-    if (question) {
-    }
-    setValue("$id", "");
-    setValue("title", "");
-    setValue("optionA", "");
-    setValue("optionB", "");
-    setValue("optionC", "");
-    setValue("optionD", "");
-    setValue("correctAnswer", "");
-    setValue("marks", "");
+
     setEdit(false);
   }, [question, setQuestion]);
 
   useEffect(() => {
     if (test) {
-      console.log("helkdkkkkk", test);
       if (test) {
-        getQuestions([test.$id]).then((res) => {
+        getQuestions([Query.contains("tests", test.$id)]).then((res) => {
           setQuestions(res.rows);
         });
       }

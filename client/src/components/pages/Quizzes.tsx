@@ -33,15 +33,11 @@ const Quizzes = () => {
         );
         setTests(res.rows);
       }
-      res.rows.map((test) => {
-        const isExistQuestion = questions.find((question) =>
-          question.tests.includes(test.$id),
-        );
-        if (!isExistQuestion) {
-          getQuestions([test.$id]).then((res) => {
-            setQuestions((prev) => [...prev, ...res.rows]);
-          });
-        }
+      const questionQueries = res.rows.map((test) =>
+        Query.equal("tests", test.$id),
+      );
+      getQuestions(questionQueries).then((res) => {
+        setQuestions(res.rows);
       });
     });
   }, [activeTab]);
