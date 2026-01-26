@@ -40,8 +40,7 @@ const useQuestion = () => {
       const response = await database.listRows<QuestionDoc>({
         databaseId: "695e2dcc002e7344aebe",
         tableId: "question",
-
-        queries: [Query.equal("tests", tests)],
+        queries: query
       });
       return response;
     } catch (err: unknown) {

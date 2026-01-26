@@ -50,15 +50,24 @@ export default function StudentTest() {
         );
       }
       const testIds = [...new Set(res.rows.map((result) => result.testId))];
-
-      const testQueries = testIds.map((testId) => Query.equal("$id", testId));
-      getTest(testQueries).then((res) => {
+      getTest([Query.equal("$id", testIds)]).then((res) => {
         setTests(res.rows);
       });
-
-      getQuestions(testIds).then((res) => {
-        console.log(res.rows);
-        setQuestions(res.rows);
+      testIds.map((id) => {
+        const isQuestionExist = questions?.find((question) =>
+          question.tests.includes(id),
+        );
+        if (!isQuestionExist) {
+          getQuestions([Query.equal("tests", id)]).then((res) => {
+            setQuestions((prev) => {
+              if (!prev) {
+                return res.rows;
+              } else {
+                return [...prev, ...res.rows];
+              }
+            });
+          });
+        }
       });
       setResults(res.rows);
     });

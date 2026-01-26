@@ -54,9 +54,21 @@ export default function LiveTestManager() {
             test.testCodes?.some((code) => code.startsWith(`LIVE`)),
           ),
         );
-
-        getQuestions(res.rows.map((test) => test.$id)).then((res) => {
-          setQuestions(res.rows);
+        res.rows.map((test) => {
+          const isQuestionExist = questions.find((question) =>
+            question.tests.includes(test.$id),
+          );
+          if (!isQuestionExist) {
+            getQuestions([Query.equal("tests", test.$id)]).then((res) => {
+              setQuestions((prev) => {
+                if (!prev) {
+                  return res.rows;
+                } else {
+                  return [...prev, ...res.rows];
+                }
+              });
+            });
+          }
         });
       } else {
         setTests(res.rows);

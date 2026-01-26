@@ -149,9 +149,7 @@ const Home = () => {
       </section>
 
       {/* ================= FOOTER ================= */}
-      <footer className="border-t py-8 text-center text-sm text-gray-500">
-        <p>© {new Date().getFullYear()} Indus Docx. All rights reserved.</p>
-
+      <footer className=" py-8 text-center text-sm text-gray-500">
         <button
           onClick={() => logout()}
           className="mt-2 text-red-500 hover:underline"

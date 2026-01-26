@@ -24,26 +24,25 @@ const Test = () => {
       setIsTestCreated(true);
     }
   };
-  const fetchTestsAndQuestions = async () => {
-    try {
-      const res = await getTest();
-      const getQuestionQueries = res.rows.map((test) =>
-        Query.contains("tests", test.$id),
-      );
-      const questions = await getQuestions([Query.or(getQuestionQueries)]);
-      setQuestions(questions.rows);
-      setTests(res.rows);  
-    } catch (err) {
-      alert(err);
-    }
-  };
   useEffect(() => {
-
     getTest().then((res) => {
-      setTests(res.rows);
-      getQuestions(res.rows.map((test) => test.$id)).then((res) => {
-        setQuestions(res.rows);
+      res.rows.map((test) => {
+        const isQuestionExist = questions.find((question) =>
+          question.tests.includes(test.$id),
+        );
+        if (!isQuestionExist) {
+          getQuestions([Query.equal("tests", test.$id)]).then((res) => {
+            setQuestions((prev) => {
+              if (!prev) {
+                return res.rows;
+              } else {
+                return [...prev, ...res.rows];
+              }
+            });
+          });
+        }
       });
+      setTests(res.rows);
     });
   }, [isTestCreated]);
 
