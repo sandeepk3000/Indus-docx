@@ -38,7 +38,13 @@ const Test = () => {
     }
   };
   useEffect(() => {
-    fetchTestsAndQuestions();
+
+    getTest().then((res) => {
+      setTests(res.rows);
+      getQuestions(res.rows.map((test) => test.$id)).then((res) => {
+        setQuestions(res.rows);
+      });
+    });
   }, [isTestCreated]);
 
   return (

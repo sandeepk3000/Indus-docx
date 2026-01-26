@@ -33,10 +33,8 @@ const Quizzes = () => {
         );
         setTests(res.rows);
       }
-      const questionQueries = res.rows.map((test) =>
-        Query.equal("tests", test.$id),
-      );
-      getQuestions(questionQueries).then((res) => {
+
+      getQuestions(res.rows.map((test) => test.$id)).then((res) => {
         setQuestions(res.rows);
       });
     });

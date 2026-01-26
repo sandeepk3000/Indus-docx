@@ -47,7 +47,7 @@ export default function LiveTestManager() {
   const [questions, setQuestions] = useState<QuestionDoc[] | null>(null);
   const { getTest, getSingleTest } = useTest();
   const navigate = useNavigate();
-  const { getResults } = useResult();
+  const { getResults} = useResult();
   const { getQuestions } = useQuestion();
 
   const { getFileView } = useMedia();
@@ -86,10 +86,9 @@ export default function LiveTestManager() {
           getTest(testQueries).then((res) => {
             setLiveTests(res.rows);
           });
-          const questionQueries = testIds.map((testId) =>
-            Query.contains("tests", testId),
-          );
-          getQuestions(questionQueries).then((res) => {
+          getQuestions(testIds).then((res) => {
+            console.log("q", res.total);
+            console.log(res.rows[0].tests);
             setQuestions(res.rows);
           });
         }

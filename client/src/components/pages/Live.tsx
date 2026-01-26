@@ -54,10 +54,8 @@ export default function LiveTestManager() {
             test.testCodes?.some((code) => code.startsWith(`LIVE`)),
           ),
         );
-        const questionQueries = res.rows.map((test) =>
-          Query.equal("$id", test.$id),
-        );
-        getQuestions(questionQueries).then((res) => {
+
+        getQuestions(res.rows.map((test) => test.$id)).then((res) => {
           setQuestions(res.rows);
         });
       } else {
