@@ -194,7 +194,9 @@ export default function StudentTest() {
                     }
                     className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700"
                   >
-                    {showAnalysis ? "Hide Analysis" : "View Analysis"}
+                    {showAnalysis === result.$id
+                      ? "Hide Analysis"
+                      : "View Analysis"}
                   </button>
                 </div>
 
