@@ -50,7 +50,7 @@ export default function LiveTestManager() {
   const navigate = useNavigate();
   const { getResults } = useResult();
   const { getQuestions } = useQuestion();
-  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState<string>("");
   const [analysisActiveTab, setAnalysisActiveTab] = useState("correct");
   const getCorrectQuestions = (result: ResultDoc) => {
     const checkedAnswers = JSON.parse(result.checkedAnswers[0]);
@@ -302,13 +302,17 @@ export default function LiveTestManager() {
                       </div>
                       <div className="mt-4 text-center">
                         <button
-                          onClick={() => setShowAnalysis(!showAnalysis)}
+                          onClick={() =>
+                            setShowAnalysis((prev) =>
+                              prev === result.$id ? "" : result.$id,
+                            )
+                          }
                           className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700"
                         >
                           {showAnalysis ? "Hide Analysis" : "View Analysis"}
                         </button>
                       </div>
-                      {showAnalysis && (
+                      {showAnalysis === result.$id && (
                         <div className="mt-4 border-t pt-4">
                           {/* Tabs */}
                           <div className="flex gap-2 mb-3">

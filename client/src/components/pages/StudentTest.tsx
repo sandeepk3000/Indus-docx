@@ -25,7 +25,8 @@ export default function StudentTest() {
   const { user } = useAuth0();
   const userId = user?.sub;
   const [tab, setTab] = useState("latest");
-  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState<string>("");
+
   const [activeTab, setActiveTab] = useState("correct");
 
   // const sortedTests = [...testResults].sort((a, b) =>
@@ -186,7 +187,11 @@ export default function StudentTest() {
                 {/* -------- FOOTER BUTTON -------- */}
                 <div className="mt-4 text-center">
                   <button
-                    onClick={() => setShowAnalysis(!showAnalysis)}
+                    onClick={() =>
+                      setShowAnalysis((prev) =>
+                        prev === result.$id ? "" : result.$id,
+                      )
+                    }
                     className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700"
                   >
                     {showAnalysis ? "Hide Analysis" : "View Analysis"}
@@ -194,7 +199,7 @@ export default function StudentTest() {
                 </div>
 
                 {/* -------- ANALYSIS SECTION -------- */}
-                {showAnalysis && (
+                {showAnalysis === result.$id && (
                   <div className="mt-4 border-t pt-4">
                     {/* Tabs */}
                     <div className="flex gap-2 mb-3">
@@ -225,7 +230,7 @@ export default function StudentTest() {
                     <div className="space-y-2">
                       {activeTab === "correct" &&
                         getCorrectQuestions(result)?.map(
-                          (q: CheckedAnswer, i:number) => (
+                          (q: CheckedAnswer, i: number) => (
                             <div className="border rounded-lg p-3 text-sm">
                               <p className="font-medium mb-2">
                                 {i + 1} . {q.title}
@@ -251,33 +256,36 @@ export default function StudentTest() {
                         )}
 
                       {activeTab === "wrong" &&
-                        getWrongQuestions(result).map((q: CheckedAnswer, i:number) => (
-                          <div className="border rounded-lg p-3 text-sm">
-                            <p className="font-medium mb-2">
-                              {i + 1}. {q.title}
-                            </p>
+                        getWrongQuestions(result).map(
+                          (q: CheckedAnswer, i: number) => (
+                            <div className="border rounded-lg p-3 text-sm">
+                              <p className="font-medium mb-2">
+                                {i + 1}. {q.title}
+                              </p>
 
-                            <div className="space-y-1">
-                              {["A", "B", "C", "D"].map((opt) => {
-                                return (
-                                  <div className={`border rounded px-2 py-1`}>
-                                    {opt}. {q[`option${opt}` as keyof typeof q]}
-                                    {opt === q.answer && (
-                                      <span className="text-red-600 ml-2 text-lg font-bold">
-                                        ✗
-                                      </span>
-                                    )}
-                                    {opt === q.correctAnswer && (
-                                      <span className="text-green-600  ml-2 text-lg font-bold">
-                                        ✓
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })}
+                              <div className="space-y-1">
+                                {["A", "B", "C", "D"].map((opt) => {
+                                  return (
+                                    <div className={`border rounded px-2 py-1`}>
+                                      {opt}.{" "}
+                                      {q[`option${opt}` as keyof typeof q]}
+                                      {opt === q.answer && (
+                                        <span className="text-red-600 ml-2 text-lg font-bold">
+                                          ✗
+                                        </span>
+                                      )}
+                                      {opt === q.correctAnswer && (
+                                        <span className="text-green-600  ml-2 text-lg font-bold">
+                                          ✓
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ),
+                        )}
                     </div>
                   </div>
                 )}
