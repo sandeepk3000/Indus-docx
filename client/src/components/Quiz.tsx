@@ -16,7 +16,7 @@ interface YourAnswer {
   questionId: string;
   answer: string;
 }
-interface CheckedAnswer extends QuestionDoc {
+export interface CheckedAnswer extends QuestionDoc {
   isCorrect: boolean;
   answer: string;
 }

@@ -13,7 +13,7 @@ import gradeGenerater from "../../utils/gradeGenerater";
 import percentageGenerater from "../../utils/percentageGenerater";
 import { useAuth0 } from "@auth0/auth0-react";
 import EmptyState from "../EmptyState";
-
+import type { CheckedAnswer } from "../Quiz";
 export default function StudentTest() {
   const [tests, setTests] = useState<TestDoc[] | null>(null);
   const [questions, setQuestions] = useState<QuestionDoc[] | null>(null);
@@ -25,6 +25,8 @@ export default function StudentTest() {
   const { user } = useAuth0();
   const userId = user?.sub;
   const [tab, setTab] = useState("latest");
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [activeTab, setActiveTab] = useState("correct");
 
   // const sortedTests = [...testResults].sort((a, b) =>
   //   tab === "latest"
@@ -72,6 +74,16 @@ export default function StudentTest() {
       setResults(res.rows);
     });
   }, [tab]);
+  const getCorrectQuestions = (result: ResultDoc) => {
+    const checkedAnswers = JSON.parse(result.checkedAnswers[0]);
+    return checkedAnswers.filter((answer: any) => answer.isCorrect);
+  };
+  const getWrongQuestions = (result: ResultDoc) => {
+    const checkedAnswers = JSON.parse(result.checkedAnswers[0]);
+    return checkedAnswers.filter(
+      (answer: any) => !answer.isCorrect && answer.answer !== "",
+    );
+  };
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6">
       {/* Header + Tabs */}
@@ -122,28 +134,24 @@ export default function StudentTest() {
               return null;
             }
             return (
-              <div
-                key={result.$id}
-                className="bg-white border rounded-xl shadow-sm hover:shadow-md transition p-4"
-              >
-                {/* Top Section */}
+              <div className="bg-white border rounded-xl shadow-sm p-4">
+                {/* -------- TOP -------- */}
                 <div className="flex gap-4">
                   <img
                     src={getFileView(test?.thumbnail)}
                     alt={test.title}
-                    className="w-20 h-16 rounded-lg object-cover flex-shrink-0"
+                    className="w-20 h-16 rounded-lg object-cover"
                   />
 
                   <div className="flex-1">
-                    <h2 className="font-semibold text-gray-800 text-sm sm:text-base">
+                    <h2 className="font-semibold text-gray-800">
                       {test.title}
                     </h2>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500">
                       {formatDateTime(result.$createdAt)}
                     </p>
                   </div>
 
-                  {/* Grade (always visible) */}
                   <span className="h-fit px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-600 font-semibold">
                     {gradeGenerater(
                       percentageGenerater(result.obtainedMarks, totalMarks),
@@ -151,38 +159,128 @@ export default function StudentTest() {
                   </span>
                 </div>
 
-                {/* Stats */}
-                <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 text-center">
+                {/* -------- STATS -------- */}
+                <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                   <Stat
+                    color="text-green-600"
                     label="Marks"
                     value={`${result.obtainedMarks}/${totalMarks}`}
-                    color="text-green-600"
                   />
                   <Stat
+                    color="text-red-500"
                     label="Wrong"
                     value={result.totalWrong}
-                    color="text-red-500"
                   />
                   <Stat
+                    color="text-yellow-500"
                     label="Skipped"
                     value={result.totalSkipped}
-                    color="text-yellow-500"
                   />
                   <Stat
+                    color="text-gray-700"
                     label="Questions"
                     value={totalQuestions.length}
-                    color="text-gray-700"
                   />
-
-                  {/* Desktop only extras */}
-                  <div className="hidden lg:block">
-                    <Stat
-                      label="Score %"
-                      value={`${percentageGenerater(result.obtainedMarks, totalMarks)}%`}
-                      color="text-blue-600"
-                    />
-                  </div>
                 </div>
+
+                {/* -------- FOOTER BUTTON -------- */}
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => setShowAnalysis(!showAnalysis)}
+                    className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    {showAnalysis ? "Hide Analysis" : "View Analysis"}
+                  </button>
+                </div>
+
+                {/* -------- ANALYSIS SECTION -------- */}
+                {showAnalysis && (
+                  <div className="mt-4 border-t pt-4">
+                    {/* Tabs */}
+                    <div className="flex gap-2 mb-3">
+                      <button
+                        onClick={() => setActiveTab("correct")}
+                        className={`px-3 py-1 text-sm rounded-md ${
+                          activeTab === "correct"
+                            ? "bg-green-600 text-white"
+                            : "bg-green-100 text-green-700"
+                        }`}
+                      >
+                        Correct ({getCorrectQuestions(result).length})
+                      </button>
+
+                      <button
+                        onClick={() => setActiveTab("wrong")}
+                        className={`px-3 py-1 text-sm rounded-md ${
+                          activeTab === "wrong"
+                            ? "bg-red-600 text-white"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        Wrong ({getWrongQuestions(result).length})
+                      </button>
+                    </div>
+
+                    {/* Tab Content */}
+                    <div className="space-y-2">
+                      {activeTab === "correct" &&
+                        getCorrectQuestions(result)?.map(
+                          (q: CheckedAnswer, i:number) => (
+                            <div className="border rounded-lg p-3 text-sm">
+                              <p className="font-medium mb-2">
+                                {i + 1} . {q.title}
+                              </p>
+
+                              <div className="space-y-1">
+                                {["A", "B", "C", "D"].map((opt) => {
+                                  return (
+                                    <div className={`border rounded px-2 py-1`}>
+                                      {opt}.{" "}
+                                      {q[`option${opt}` as keyof typeof q]}
+                                      {opt === q.correctAnswer && (
+                                        <span className="text-green-600 ml-2 text-lg font-bold">
+                                          ✓
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ),
+                        )}
+
+                      {activeTab === "wrong" &&
+                        getWrongQuestions(result).map((q: CheckedAnswer, i:number) => (
+                          <div className="border rounded-lg p-3 text-sm">
+                            <p className="font-medium mb-2">
+                              {i + 1}. {q.title}
+                            </p>
+
+                            <div className="space-y-1">
+                              {["A", "B", "C", "D"].map((opt) => {
+                                return (
+                                  <div className={`border rounded px-2 py-1`}>
+                                    {opt}. {q[`option${opt}` as keyof typeof q]}
+                                    {opt === q.answer && (
+                                      <span className="text-red-600 ml-2 text-lg font-bold">
+                                        ✗
+                                      </span>
+                                    )}
+                                    {opt === q.correctAnswer && (
+                                      <span className="text-green-600  ml-2 text-lg font-bold">
+                                        ✓
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
