@@ -37,10 +37,14 @@ const useQuestion = () => {
     query?: string[],
   ): Promise<Models.RowList<QuestionDoc>> => {
     try {
+      // if query hai to limit 100
+      if (query) {
+        query.push("limit(100)");
+      }
       const response = await database.listRows<QuestionDoc>({
         databaseId: "695e2dcc002e7344aebe",
         tableId: "question",
-        queries: query
+        queries: query,
       });
       return response;
     } catch (err: unknown) {
