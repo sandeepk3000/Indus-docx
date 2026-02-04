@@ -1,4 +1,4 @@
-import { TablesDB } from "appwrite";
+import { TablesDB, Query } from "appwrite";
 import client from "../lib/appwrite";
 import { type Question } from "../../types";
 import { type Models } from "appwrite";
@@ -39,7 +39,7 @@ const useQuestion = () => {
     try {
       // if query hai to limit 100
       if (query) {
-        query.push("limit(100)");
+        query.push(Query.limit(100));
       }
       const response = await database.listRows<QuestionDoc>({
         databaseId: "695e2dcc002e7344aebe",
