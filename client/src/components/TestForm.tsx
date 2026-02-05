@@ -7,6 +7,7 @@ import useMedia from "../hooks/useMedia";
 import { ID } from "appwrite";
 import type { TestDoc, Test } from "../../types";
 import { useAuth0 } from "@auth0/auth0-react";
+import { useEffect } from "react";
 
 export interface TestFormValues extends Omit<Test, "thumbnail"> {
   thumbnail: FileList | null;
@@ -25,6 +26,7 @@ const TestForm = ({ onTestSubmit, test }: TestFormProps) => {
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm<TestFormValues>({
     defaultValues: {
       title: test?.title || "",
@@ -48,7 +50,6 @@ const TestForm = ({ onTestSubmit, test }: TestFormProps) => {
         const thumbnail = data.thumbnail?.[0]
           ? await upload(data.thumbnail[0])
           : null;
-        console.log(thumbnail);
         if (thumbnail) {
           console.log("available thum", test.thumbnail);
           await deleteFile(test.thumbnail);
@@ -96,6 +97,20 @@ const TestForm = ({ onTestSubmit, test }: TestFormProps) => {
       throw err;
     }
   };
+  useEffect(() => {
+    // trim all fields
+    watch((data) => {
+      if (data.title) {
+        data.title = data.title.trim();
+      }
+      if (data.description) {
+        data.description = data.description.trim();
+      }
+      if (data.duration) {
+        data.duration = data.duration.trim();
+      }
+    });
+  }, [watch]);
 
   return (
     <div className="min-h-screen  pb-24">

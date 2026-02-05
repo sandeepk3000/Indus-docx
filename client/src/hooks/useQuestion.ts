@@ -39,7 +39,7 @@ const useQuestion = () => {
     try {
       // if query hai to limit 100
       if (query) {
-        query.push(Query.limit(100));
+        query.push(Query.limit(2000000));
       }
       const response = await database.listRows<QuestionDoc>({
         databaseId: "695e2dcc002e7344aebe",

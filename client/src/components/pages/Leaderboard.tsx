@@ -33,41 +33,20 @@ const Leaderboards = () => {
       return;
     }
     getResults([Query.startsWith("testCode", "LIVE")]).then((res) => {
-      if (activeTab === "latest") {
-        res.rows.sort(
-          (a, b) =>
-            new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime(),
-        );
-      } else {
-        res.rows.sort(
-          (a, b) =>
-            new Date(a.$createdAt).getTime() - new Date(b.$createdAt).getTime(),
-        );
-      }
-
+      res.rows.sort(
+        (a, b) =>
+          new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime(),
+      );
       const testIds = [...new Set(res.rows.map((result) => result.testId))];
       getTest([Query.equal("$id", testIds)]).then((res) => {
         setTestsData(res.rows);
       });
-      testIds.map((id) => {
-        const isQuestionExist = questions?.find((question) =>
-          question.tests.includes(id),
-        );
-        if (!isQuestionExist) {
-          getQuestions([Query.equal("tests", id)]).then((res) => {
-            setQuestions((prev) => {
-              if (!prev) {
-                return res.rows;
-              } else {
-                return [...prev, ...res.rows];
-              }
-            });
-          });
-        }
+      getQuestions([Query.equal("tests", testIds)]).then((res) => {
+        setQuestions(res.rows);
       });
       setResults(res.rows);
     });
-  }, []);
+  }, [activeTab, userId, results]);
   const getLiveCodes = (): string[] => {
     if (results) {
       return [...new Set(results.map((result) => result.testCode))];

@@ -36,6 +36,7 @@ import { Query } from "appwrite";
 export default function LiveTestManager() {
   const [activeTab, setActiveTab] = useState("live");
   const [tests, setTests] = useState<TestDoc[]>([]);
+
   const [liveTests, setLiveTests] = useState<TestDoc[]>([]);
   const [questions, setQuestions] = useState<QuestionDoc[]>([]);
   const { getTest, pushTestCode } = useTest();
@@ -54,21 +55,13 @@ export default function LiveTestManager() {
             test.testCodes?.some((code) => code.startsWith(`LIVE`)),
           ),
         );
-        res.rows.map((test) => {
-          const isQuestionExist = questions.find((question) =>
-            question.tests.includes(test.$id),
-          );
-          if (!isQuestionExist) {
-            getQuestions([Query.equal("tests", test.$id)]).then((res) => {
-              setQuestions((prev) => {
-                if (!prev) {
-                  return res.rows;
-                } else {
-                  return [...prev, ...res.rows];
-                }
-              });
-            });
-          }
+        getQuestions([
+          Query.equal(
+            "tests",
+            res.rows.map((test) => test.$id),
+          ),
+        ]).then((res) => {
+          setQuestions(res.rows);
         });
       } else {
         setTests(res.rows);
@@ -137,44 +130,52 @@ export default function LiveTestManager() {
 
             {/* Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {liveTests.map((test) => (
-                <div
-                  key={test.$id}
-                  className="bg-white rounded-xl shadow-sm border"
-                >
-                  <img
-                    src={getFileView(test.thumbnail)}
-                    className="h-40 w-full object-cover rounded-t-xl"
-                  />
-                  <div className="p-4 space-y-2">
-                    <h3 className="text-lg font-bold">{test.title}</h3>
-                    <p className="text-sm text-gray-600">{test.description}</p>
-                    <p className="text-xs text-gray-500">
-                      Created: {formatDateTime(test.$createdAt)}
-                    </p>
+              {liveTests
+                .sort(
+                  (a, b) =>
+                    new Date(b.$createdAt).getTime() -
+                    new Date(a.$createdAt).getTime(),
+                )
+                .map((test) => (
+                  <div
+                    key={test.$id}
+                    className="bg-white rounded-xl shadow-sm border"
+                  >
+                    <img
+                      src={getFileView(test.thumbnail)}
+                      className="h-40 w-full object-cover rounded-t-xl"
+                    />
+                    <div className="p-4 space-y-2">
+                      <h3 className="text-lg font-bold">{test.title}</h3>
+                      <p className="text-sm text-gray-600">
+                        {test.description}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Created: {formatDateTime(test.$createdAt)}
+                      </p>
 
-                    <div className="flex justify-between text-sm text-gray-700">
-                      <span>
-                        {" "}
-                        📝 Questions:{" "}
-                        {
-                          questions.filter((question) =>
-                            question.tests.includes(test.$id),
-                          ).length
-                        }
-                      </span>
-                      <span>
-                        🎯 Marks:
-                        {questions
-                          .filter((q) => q.tests.includes(test.$id))
-                          .reduce((acc: number, question) => {
-                            return acc + Number(question.marks);
-                          }, 0)}{" "}
-                      </span>
+                      <div className="flex justify-between text-sm text-gray-700">
+                        <span>
+                          {" "}
+                          📝 Questions:{" "}
+                          {
+                            questions.filter((question) =>
+                              question.tests.includes(test.$id),
+                            ).length
+                          }
+                        </span>
+                        <span>
+                          🎯 Marks:
+                          {questions
+                            .filter((q) => q.tests.includes(test.$id))
+                            .reduce((acc: number, question) => {
+                              return acc + Number(question.marks);
+                            }, 0)}{" "}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           </>
         )}

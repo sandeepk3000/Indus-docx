@@ -34,6 +34,7 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
     handleSubmit,
     setValue,
     formState: { errors },
+    watch,
   } = useForm<Question>({
     defaultValues: {
       $id: "",
@@ -124,12 +125,31 @@ const QuestionForm = ({ test, onQuestionSubmit }: QuestionFormProps) => {
   useEffect(() => {
     if (test) {
       if (test) {
-        getQuestions([Query.contains("tests", test.$id)]).then((res) => {
+        getQuestions([Query.equal("tests", test.$id)]).then((res) => {
           setQuestions(res.rows);
         });
       }
     }
   }, [test]);
+  useEffect(() => {
+    watch((data) => {
+      if (data.title) {
+        data.title = data.title.trim();
+      }
+      if (data.optionA) {
+        data.optionA = data.optionA.trim();
+      }
+      if (data.optionB) {
+        data.optionB = data.optionB.trim();
+      }
+      if (data.optionC) {
+        data.optionC = data.optionC.trim();
+      }
+      if (data.optionD) {
+        data.optionD = data.optionD.trim();
+      }
+    });
+  }, [watch]);
 
   return (
     <>

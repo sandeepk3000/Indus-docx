@@ -15,42 +15,44 @@ const Quizzes = () => {
 
   const [questions, setQuestions] = useState<QuestionDoc[]>([]);
   const { getTest } = useTest();
+  const [filteredTests, setFilteredTests] = useState<TestDoc[]>([]);
   const { getQuestions } = useQuestion();
   const { getFileView } = useMedia();
 
   useEffect(() => {
-    getTest([Query.equal("status", ["PUBLISHED"])]).then((res) => {
-      if (activeTab === "latest") {
-        res.rows.sort(
-          (a, b) =>
-            new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime(),
-        );
-        setTests(res.rows);
-      } else {
-        res.rows.sort(
-          (a, b) =>
-            new Date(a.$createdAt).getTime() - new Date(b.$createdAt).getTime(),
-        );
-        setTests(res.rows);
-      }
-      res.rows.map((test) => {
-        const isQuestionExist = questions.find((question) =>
-          question.tests.includes(test.$id),
-        );
-        if (!isQuestionExist) {
-          getQuestions([Query.equal("tests", test.$id)]).then((res) => {
-            setQuestions((prev) => {
-              if (!prev) {
-                return res.rows;
-              } else {
-                return [...prev, ...res.rows];
-              }
-            });
-          });
-        }
+    getTest([
+      Query.equal("access", ["PUBLIC"]),
+      Query.equal("status", ["PUBLISHED"]),
+    ]).then((res) => {
+      getQuestions([
+        Query.equal(
+          "tests",
+          res.rows.map((test) => test.$id),
+        ),
+      ]).then((res) => {
+        setQuestions(res.rows);
       });
+      setTests(res.rows);
     });
   }, [activeTab]);
+  useEffect(() => {
+    if (activeTab === "latest") {
+      setFilteredTests(
+        tests.sort(
+          (a, b) =>
+            new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime(),
+        ),
+      );
+    }
+    if (activeTab === "oldest") {
+      setFilteredTests(
+        tests.sort(
+          (a, b) =>
+            new Date(a.$createdAt).getTime() - new Date(b.$createdAt).getTime(),
+        ),
+      );
+    }
+  }, [activeTab, tests]);
 
   return (
     <div className="min-h-screen bg-slate-100 p-4">
@@ -80,7 +82,7 @@ const Quizzes = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tests.map((test) => (
+          {filteredTests.map((test) => (
             <Link to={`/student/quiz/${test.$id}`}>
               <div
                 key={test.$id}

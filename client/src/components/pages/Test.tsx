@@ -26,21 +26,13 @@ const Test = () => {
   };
   useEffect(() => {
     getTest().then((res) => {
-      res.rows.map((test) => {
-        const isQuestionExist = questions.find((question) =>
-          question.tests.includes(test.$id),
-        );
-        if (!isQuestionExist) {
-          getQuestions([Query.equal("tests", test.$id)]).then((res) => {
-            setQuestions((prev) => {
-              if (!prev) {
-                return res.rows;
-              } else {
-                return [...prev, ...res.rows];
-              }
-            });
-          });
-        }
+      getQuestions([
+        Query.equal(
+          "tests",
+          res.rows.map((test) => test.$id),
+        ),
+      ]).then((res) => {
+        setQuestions(res.rows);
       });
       setTests(res.rows);
     });

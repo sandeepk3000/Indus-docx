@@ -44,6 +44,7 @@ export default function LiveTestManager() {
 
   const [activeTab, setActiveTab] = useState("live");
   const [results, setResults] = useState<ResultDoc[] | null>(null);
+  const [filteredResults, setFilteredResults] = useState<ResultDoc[]>([]);
   const [liveTests, setLiveTests] = useState<TestDoc[] | null>(null);
   const [questions, setQuestions] = useState<QuestionDoc[] | null>(null);
   const { getTest, getSingleTest } = useTest();
@@ -77,47 +78,40 @@ export default function LiveTestManager() {
         Query.equal("studentId", userId),
         Query.startsWith("testCode", "LIVE"),
       ]).then((res) => {
-        if (liveTab === "latest") {
-          res.rows.sort(
-            (a, b) =>
-              new Date(b.$createdAt).getTime() -
-              new Date(a.$createdAt).getTime(),
-          );
-        } else {
-          res.rows.sort(
-            (a, b) =>
-              new Date(a.$createdAt).getTime() -
-              new Date(b.$createdAt).getTime(),
-          );
-        }
         const testIds = [...new Set(res.rows.map((result) => result.testId))];
-        console.log(testIds);
-        if (testIds.length > 0) {
-          getTest([Query.equal("$id", testIds)]).then((res) => {
-            setLiveTests(res.rows);
-          });
-          testIds.map((id) => {
-            const isQuestionExist = questions?.find((question) =>
-              question.tests.includes(id),
-            );
-            if (!isQuestionExist) {
-              getQuestions([Query.equal("tests", id)]).then((res) => {
-                setQuestions((prev) => {
-                  if (!prev) {
-                    return res.rows;
-                  } else {
-                    return [...prev, ...res.rows];
-                  }
-                });
-              });
-            }
-          });
-        }
+        getTest([Query.equal("$id", testIds)]).then((res) => {
+          setLiveTests(res.rows);
+        });
+        getQuestions([Query.equal("tests", testIds)]).then((res) => {
+          setQuestions(res.rows);
+        });
 
         setResults(res.rows);
       });
     }
-  }, [liveTab]);
+  }, []);
+  useEffect(() => {
+    if (results) {
+      if (liveTab === "latest") {
+        setFilteredResults(
+          results.sort(
+            (a, b) =>
+              new Date(b.$createdAt).getTime() -
+              new Date(a.$createdAt).getTime(),
+          ),
+        );
+      }
+      if (liveTab === "oldest") {
+        setFilteredResults(
+          results.sort(
+            (a, b) =>
+              new Date(a.$createdAt).getTime() -
+              new Date(b.$createdAt).getTime(),
+          ),
+        );
+      }
+    }
+  }, [liveTab, results]);
 
   const handleLiveJoin = async () => {
     if (!userId) {
@@ -224,7 +218,7 @@ export default function LiveTestManager() {
             <div className="space-y-4">
               {questions &&
                 liveTests &&
-                results?.map((result) => {
+                filteredResults?.map((result) => {
                   const test = liveTests.find(
                     (test) => test.$id === result.testId,
                   );

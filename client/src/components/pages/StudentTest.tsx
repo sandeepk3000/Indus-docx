@@ -21,6 +21,7 @@ export default function StudentTest() {
   const { getTest } = useTest();
   const { getFileView } = useMedia();
   const { getQuestions } = useQuestion();
+  const [filteredResults, setFilteredResults] = useState<ResultDoc[]>([]);
   const { getResults } = useResult();
   const { user } = useAuth0();
   const userId = user?.sub;
@@ -41,40 +42,26 @@ export default function StudentTest() {
       return;
     }
     getResults([Query.equal("studentId", userId)]).then((res) => {
-      if (tab === "latest") {
-        res.rows.sort(
-          (a, b) =>
-            new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime(),
-        );
-      } else {
-        res.rows.sort(
-          (a, b) =>
-            new Date(a.$createdAt).getTime() - new Date(b.$createdAt).getTime(),
-        );
-      }
       const testIds = [...new Set(res.rows.map((result) => result.testId))];
       getTest([Query.equal("$id", testIds)]).then((res) => {
         setTests(res.rows);
       });
-      testIds.map((id) => {
-        const isQuestionExist = questions?.find((question) =>
-          question.tests.includes(id),
-        );
-        if (!isQuestionExist) {
-          getQuestions([Query.equal("tests", id)]).then((res) => {
-            setQuestions((prev) => {
-              if (!prev) {
-                return res.rows;
-              } else {
-                return [...prev, ...res.rows];
-              }
-            });
-          });
-        }
+      getQuestions([Query.equal("tests", testIds)]).then((res) => {
+        setQuestions(res.rows);
       });
       setResults(res.rows);
     });
-  }, [tab]);
+  }, []);
+  useEffect(() => {
+    if (results) {
+      const sortedResults = [...results].sort((a, b) =>
+        tab === "latest"
+          ? new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime()
+          : new Date(a.$createdAt).getTime() - new Date(b.$createdAt).getTime(),
+      );
+      setFilteredResults(sortedResults);
+    }
+  }, [tab, results]);
   const getCorrectQuestions = (result: ResultDoc) => {
     const checkedAnswers = JSON.parse(result.checkedAnswers[0]);
     return checkedAnswers.filter((answer: any) => answer.isCorrect);
@@ -122,7 +109,7 @@ export default function StudentTest() {
       <div className="space-y-4">
         {questions &&
           tests &&
-          results?.map((result) => {
+          filteredResults?.map((result) => {
             const test = tests.find((test) => test.$id === result.testId);
             const totalQuestions = questions.filter((question) =>
               question.tests.includes(result.testId),
