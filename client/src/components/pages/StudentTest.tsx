@@ -49,6 +49,7 @@ export default function StudentTest() {
         setTests(res.rows);
       });
       getQuestions([Query.equal("tests", testIds)]).then((res) => {
+        console.log("questions:-",res.rows);
         setQuestions(res.rows);
       });
       setResults(res.rows);
