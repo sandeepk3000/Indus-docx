@@ -42,6 +42,7 @@ export default function StudentTest() {
       return;
     }
     getResults([Query.equal("studentId", userId)]).then((res) => {
+      console.log("result:-",res.rows)
       const testIds = [...new Set(res.rows.map((result) => result.testId))];
       getTest([Query.equal("$id", testIds)]).then((res) => {
         setTests(res.rows);
