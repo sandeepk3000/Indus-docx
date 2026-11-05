@@ -1,10 +1,17 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
+import { LogOut } from "lucide-react";
 import mainLogo from "../assets/indusdocx.png";
+
+interface User {
+  name?: string;
+  picture?: string;
+}
 
 interface NavbarProps {
   isLoggedIn: boolean;
-  user?: any;
+  user?: User;
   onLogin?: () => void;
   onLogout?: () => void;
 }
@@ -16,60 +23,104 @@ const Navbar: React.FC<NavbarProps> = ({
   onLogout,
 }) => {
   return (
-    <nav className="w-full bg-white shadow-md top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          {/* Left: Logo + Title */}
-          <Link to={"/"}>
-            <div className="flex items-center gap-3">
-              <img
-                src={mainLogo}
-                alt="Logo"
-                className="h-10 w-10 rounded-full object-cover"
-              />
-              <h1 className="text-xl font-bold text-gray-800">Indus Docx</h1>
-            </div>
-          </Link>
+    <header className="sticky top-3 z-50 w-full px-3 sm:px-5">
+      <nav
+        className="
+          max-w-7xl mx-auto
+          flex items-center justify-between
+          h-14 sm:h-16
+          px-4 sm:px-6
+          rounded-full
+          border border-gray-200/80
+          bg-white/18 backdrop-blur-xl
+          shadow-lg shadow-black/[0.04]
+          transition-all duration-300
+        "
+      >
+        {/* Logo */}
+        <Link
+          to="/"
+          className="flex items-center gap-3 group"
+        >
+          <img
+            src={mainLogo}
+            alt="Indus Docx"
+            className="
+              h-9 w-9 sm:h-10 sm:w-10
+              rounded-full object-cover
+              ring-2 ring-gray-100
+              group-hover:scale-105
+              transition-transform
+            "
+          />
 
-          {/* Right */}
-          <div className="flex items-center gap-4">
-            {!isLoggedIn ? (
+          <h1 className="text-lg sm:text-xl font-bold tracking-tight text-gray-900">
+            Indus <span className="text-blue-600">Docx</span>
+          </h1>
+        </Link>
+
+        {/* Right Actions */}
+        <div className="flex items-center gap-2 sm:gap-4">
+
+          {!isLoggedIn ? (
+            <button
+              onClick={onLogin}
+              className="
+                px-5 sm:px-7 py-2
+                rounded-full
+                bg-gray-900 text-white
+                text-sm font-semibold
+                shadow-md shadow-gray-900/10
+                hover:bg-blue-600
+                hover:shadow-blue-600/20
+                active:scale-95
+                transition-all duration-200
+              "
+            >
+              Login
+            </button>
+          ) : (
+            <>
+              {/* User Profile */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <img
+                  src={user?.picture || "/default-avatar.png"}
+                  alt="User"
+                  className="
+                    h-9 w-9 sm:h-10 sm:w-10
+                    rounded-full object-cover
+                    border-2 border-white
+                    shadow-sm ring-1 ring-gray-200
+                  "
+                />
+
+                <span className="hidden sm:block max-w-32 truncate text-sm font-semibold text-gray-800">
+                  {user?.name || "User"}
+                </span>
+              </div>
+
+              {/* Logout */}
               <button
-                onClick={onLogin}
-                className="px-5 py-2 rounded-lg bg-blue-600 text-white font-medium 
-                           hover:bg-blue-700 transition"
+                onClick={onLogout}
+                title="Logout"
+                className="
+                  flex items-center justify-center
+                  h-9 w-9 sm:h-10 sm:w-10
+                  rounded-full
+                  bg-red-50 text-red-500
+                  border border-red-100
+                  hover:bg-red-500 hover:text-white
+                  active:scale-95
+                  transition-all duration-200
+                "
               >
-                Login
+                <LogOut className="h-4 w-4" />
               </button>
-            ) : (
-              <>
-                {/* User Info */}
-                <div className="flex items-center gap-3">
-                  <img
-                    src={user?.picture}
-                    alt="User"
-                    className="h-9 w-9 rounded-full object-cover border"
-                  />
-                  {/* Name hide on small screens */}
-                  <span className="hidden sm:block text-gray-700 font-medium">
-                    {user?.name}
-                  </span>
-                </div>
-
-                {/* Logout */}
-                <button
-                  onClick={onLogout}
-                  className="px-4 py-2 rounded-lg bg-red-500 text-white text-sm 
-                             hover:bg-red-600 transition"
-                >
-                  Logout
-                </button>
-              </>
-            )}
-          </div>
+            </>
+          )}
         </div>
-      </div>
-    </nav>
+      </nav>
+    </header>
   );
 };
 
