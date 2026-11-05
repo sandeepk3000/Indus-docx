@@ -36,6 +36,7 @@ const useQuestion = () => {
   const getQuestions = async (
     query?: string[],
   ): Promise<Models.RowList<QuestionDoc>> => {
+    console.log(query)
     try {
       // if query hai to limit 100
       if (query) {
@@ -46,6 +47,7 @@ const useQuestion = () => {
         tableId: "question",
         queries: query,
       });
+      console.log("respose:- ",response);
       return response;
     } catch (err: unknown) {
       throw err;
