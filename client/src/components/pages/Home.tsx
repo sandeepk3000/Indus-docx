@@ -1,886 +1,516 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useAuth0 } from "@auth0/auth0-react";
 import {
-  BookOpenCheck,
-  CalendarDays,
-  Check,
-  Copy,
+  ArrowRight,
+  BookOpen,
+  Clock3,
   FileQuestion,
-  Hash,
-  Loader2,
-  Plus,
-  Radio,
-  Search,
-  ShieldAlert,
+  GraduationCap,
   Sparkles,
+  Search,
   Trophy,
-  X,
+  CheckCircle2,
+  CalendarDays,
 } from "lucide-react";
-import { Query } from "appwrite";
 
 import useTest from "../../hooks/useTest";
-import useQuestion from "../../hooks/useQuestion";
 import useMedia from "../../hooks/useMedia";
+import Loading from "../Loading";
+import type { TestDoc } from "../../../types";
 
-import type { TestDoc, QuestionDoc } from "../../../types";
-import { codeGenerater } from "../../utils/codeGenerater";
-import { formatDateTime } from "../../utils/dateFormatter";
+const tabs = ["All", "Published", "Upcoming"];
 
-type MainTab = "live" | "create";
-type SortTab = "latest" | "oldest";
-
-export default function LiveTestManager() {
-  const [activeTab, setActiveTab] = useState<MainTab>("live");
-  const [liveTab, setLiveTab] = useState<SortTab>("latest");
-
+const Home = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const [tests, setTests] = useState<TestDoc[]>([]);
-  const [liveTests, setLiveTests] = useState<TestDoc[]>([]);
-  const [questions, setQuestions] = useState<QuestionDoc[]>([]);
-
-  const [selectedTest, setSelectedTest] = useState<TestDoc | null>(null);
-  const [newCode, setNewCode] = useState("");
+  const [activeTab, setActiveTab] = useState("All");
   const [search, setSearch] = useState("");
 
-  const [loading, setLoading] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
-  const { getTest, pushTestCode } = useTest();
-  const { getQuestions } = useQuestion();
+  const { isAuthenticated, user } = useAuth0();
+  const { getTest } = useTest();
   const { getFileView } = useMedia();
 
-  // Fetch tests and questions
+  const roles = user?.["https://indusdocx.com/roles"];
+
   useEffect(() => {
     let mounted = true;
 
-    const fetchData = async () => {
-      setLoading(true);
-      setError("");
-
+    const fetchTests = async () => {
       try {
+        setIsLoading(true);
         const res = await getTest();
 
-        if (!mounted) return;
-
-        const allTests = res.rows;
-
-        if (activeTab === "live") {
-          const filteredTests = allTests.filter((test) =>
-            test.testCodes?.some((code) => code.startsWith("LIVE")),
-          );
-
-          setLiveTests(filteredTests);
-
-          const testIds = filteredTests.map((test) => test.$id);
-
-          if (testIds.length > 0) {
-            const questionRes = await getQuestions([
-              Query.equal("tests", testIds),
-            ]);
-
-            if (mounted) {
-              setQuestions(questionRes.rows);
-            }
-          } else {
-            setQuestions([]);
-          }
-        } else {
-          setTests(allTests);
-        }
-      } catch (err) {
-        console.error("Failed to fetch tests:", err);
-
-        if (mounted) {
-          setError("Unable to load tests. Please try again.");
-        }
+        if (mounted) setTests(res.rows || []);
+      } catch (error) {
+        console.error("Failed to load tests:", error);
       } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+        if (mounted) setIsLoading(false);
       }
     };
 
-    fetchData();
+    fetchTests();
 
     return () => {
       mounted = false;
     };
-  }, [activeTab]);
+  }, []);
 
-  // Search and sorting
-  const filteredLiveTests = useMemo(() => {
-    return [...liveTests]
-      .filter((test) => {
-        const value = search.toLowerCase();
-
-        return (
-          test.title?.toLowerCase().includes(value) ||
-          test.description?.toLowerCase().includes(value)
-        );
-      })
-      .sort((a, b) => {
-        const dateA = new Date(a.$createdAt).getTime();
-        const dateB = new Date(b.$createdAt).getTime();
-
-        return liveTab === "latest" ? dateB - dateA : dateA - dateB;
-      });
-  }, [liveTests, liveTab, search]);
-
-  // Question statistics
-  const getTestStats = (testId: string) => {
-    const testQuestions = questions.filter((question) =>
-      question.tests.includes(testId),
+  const filteredTests = tests
+    .filter((test) => {
+      if (activeTab === "Published") return test.status === "PUBLISHED";
+      if (activeTab === "Upcoming") return test.status === "UPCOMING";
+      return true;
+    })
+    .filter((test) =>
+      test.title.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.$createdAt).getTime() -
+        new Date(a.$createdAt).getTime()
     );
 
-    const totalMarks = testQuestions.reduce(
-      (total, question) => total + Number(question.marks || 0),
-      0,
-    );
+  const publishedCount = tests.filter(
+    (test) => test.status === "PUBLISHED"
+  ).length;
 
-    return {
-      totalQuestions: testQuestions.length,
-      totalMarks,
-    };
-  };
+  const upcomingCount = tests.filter(
+    (test) => test.status === "UPCOMING"
+  ).length;
 
-  const liveCodeCount = liveTests.length;
+  const getTestLink = (test: TestDoc) => {
+    if (!isAuthenticated) return "/login";
 
-  const totalQuestions = questions.length;
-
-  const totalMarks = questions.reduce(
-    (total, question) => total + Number(question.marks || 0),
-    0,
-  );
-
-  // Generate LIVE code
-  const generateLiveCode = async () => {
-    if (!selectedTest || generating) return;
-
-    setError("");
-    setSuccess("");
-
-    try {
-      setGenerating(true);
-
-      const code = codeGenerater(selectedTest.$id, "LIVE");
-
-      // Validate generated code
-      if (!code || typeof code !== "string" || !code.startsWith("LIVE")) {
-        setError(
-          "Invalid test code! Generated code must start with LIVE.",
-        );
-        return;
-      }
-
-      // Avoid duplicate codes
-      if (selectedTest.testCodes?.includes(code)) {
-        setError("This test code already exists. Generate another code.");
-        return;
-      }
-
-      setNewCode(code);
-
-      await pushTestCode(selectedTest.$id, code);
-
-      // Update selected test immediately
-      const updatedCodes = [...(selectedTest.testCodes || []), code];
-
-      const updatedTest = {
-        ...selectedTest,
-        testCodes: updatedCodes,
-      };
-
-      setSelectedTest(updatedTest);
-
-      setTests((previous) =>
-        previous.map((test) =>
-          test.$id === selectedTest.$id ? updatedTest : test,
-        ),
-      );
-
-      setSuccess("Live test code generated successfully!");
-    } catch (err) {
-      console.error("Code generation failed:", err);
-      setError("Unable to generate code. Please try again.");
-      setNewCode("");
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const copyCode = async () => {
-    if (!newCode) return;
-
-    try {
-      await navigator.clipboard.writeText(newCode);
-      setSuccess("Test code copied successfully!");
-    } catch {
-      setError("Unable to copy code. Please copy it manually.");
-    }
-  };
-
-  const selectTab = (tab: MainTab) => {
-    setActiveTab(tab);
-    setSearch("");
-    setError("");
-    setSuccess("");
+    return roles?.includes("admin")
+      ? `/admin/tests/${test.$id}/edit`
+      : test.status === "UPCOMING"
+        ? "/"
+        : `/student/quiz/${test.$id}`;
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f8fc] px-3 py-5 sm:px-5 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <main className="min-h-screen px-3 sm:px-5 lg:px-8 pt-4 sm:pt-6 pb-8">
 
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#FF0A2B]">
-              <Radio size={16} />
-              <span>ADMINISTRATION</span>
-            </div>
+      {/* ================= HERO ================= */}
 
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              Live Test Manager
-            </h1>
+      <section className="relative max-w-7xl mx-auto overflow-hidden rounded-[28px] sm:rounded-[36px] bg-[#080D20] text-white shadow-xl shadow-indigo-950/10">
 
-            <p className="mt-1 text-sm text-slate-500">
-              Manage live tests and generate unique access codes.
-            </p>
-          </div>
+        {/* Background Effects */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-40 -left-20 h-96 w-96 rounded-full bg-indigo-600/30 blur-[120px]" />
+          <div className="absolute top-40 right-0 h-96 w-96 rounded-full bg-blue-600/20 blur-[120px]" />
+          <div className="absolute bottom-0 left-1/2 h-40 w-96 -translate-x-1/2 rounded-full bg-purple-600/20 blur-[100px]" />
 
-          <div className="flex items-center gap-2 self-start rounded-xl border border-red-100 bg-white px-4 py-2.5 shadow-sm">
-            <span className="relative flex size-2.5">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-400 opacity-75" />
-              <span className="relative inline-flex size-2.5 rounded-full bg-[#FF0A2B]" />
-            </span>
-            <span className="text-xs font-bold text-slate-700">
-              LIVE MANAGEMENT
-            </span>
-          </div>
-        </div>
-
-        {/* Statistics */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <StatCard
-            title="Live Tests"
-            value={liveCodeCount}
-            icon={<Radio size={20} />}
-            color="red"
-          />
-
-          <StatCard
-            title="Total Questions"
-            value={totalQuestions}
-            icon={<FileQuestion size={20} />}
-            color="blue"
-          />
-
-          <StatCard
-            title="Total Marks"
-            value={totalMarks}
-            icon={<Trophy size={20} />}
-            color="amber"
+          <div
+            className="absolute inset-0 opacity-[0.06]"
+            style={{
+              backgroundImage:
+                "radial-gradient(#ffffff 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
           />
         </div>
 
-        {/* Main Navigation */}
-        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-          <button
-            onClick={() => selectTab("live")}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-all sm:flex-none ${
-              activeTab === "live"
-                ? "bg-[#FF0A2B] text-white shadow-md shadow-red-500/20"
-                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-            }`}
-          >
-            <Radio size={17} />
-            Live Tests
-          </button>
+        <div className="relative max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 py-16 sm:py-20 lg:py-24">
 
-          <button
-            onClick={() => selectTab("create")}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-all sm:flex-none ${
-              activeTab === "create"
-                ? "bg-[#FF0A2B] text-white shadow-md shadow-red-500/20"
-                : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-            }`}
-          >
-            <Plus size={17} />
-            Generate Code
-          </button>
-        </div>
+          <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
 
-        {/* Error */}
-        {error && (
-          <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            <ShieldAlert size={19} className="mt-0.5 shrink-0" />
-            <p className="flex-1">{error}</p>
-            <button
-              onClick={() => setError("")}
-              className="shrink-0 rounded-lg p-1 hover:bg-red-100"
+            {/* Left Content */}
+
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
+              className="text-center md:text-left"
             >
-              <X size={16} />
-            </button>
-          </div>
-        )}
-
-        {/* Success */}
-        {success && (
-          <div className="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-            <Check size={19} className="shrink-0" />
-            <p className="flex-1">{success}</p>
-            <button
-              onClick={() => setSuccess("")}
-              className="shrink-0 rounded-lg p-1 hover:bg-green-100"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        )}
-
-        {/* LIVE TESTS */}
-        {activeTab === "live" && (
-          <div className="space-y-5">
-
-            {/* Section Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">
-                  Available Live Tests
-                </h2>
-                <p className="mt-1 text-xs text-slate-500">
-                  Tests having a LIVE access code.
-                </p>
+              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-400/30 bg-indigo-400/10 px-4 py-2 text-xs sm:text-sm text-indigo-200 mb-7">
+                <Sparkles className="h-4 w-4 text-yellow-300" />
+                Your Smart Learning Platform
               </div>
 
-              <div className="flex flex-col gap-2 sm:flex-row">
-                {/* Search */}
-                <div className="relative">
-                  <Search
-                    size={17}
-                    className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400"
-                  />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search tests..."
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none transition focus:border-[#FF0A2B] focus:ring-2 focus:ring-red-100 sm:w-56"
-                  />
-                </div>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.15]">
+                Learn Smarter.
+                <br />
+                Grow{" "}
+                <span className="bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent">
+                  Faster.
+                </span>
+              </h1>
 
-                {/* Sorting */}
-                <div className="flex rounded-xl border border-slate-200 bg-white p-1">
-                  <button
-                    onClick={() => setLiveTab("latest")}
-                    className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                      liveTab === "latest"
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-500 hover:bg-slate-50"
-                    }`}
-                  >
-                    Latest
-                  </button>
+              <p className="mt-6 max-w-xl mx-auto md:mx-0 text-base sm:text-lg leading-8 text-slate-400">
+                Everything you need to learn, practice and succeed.
+                Explore quality notes, educational resources and online
+                tests with Indus Docx.
+              </p>
 
-                  <button
-                    onClick={() => setLiveTab("oldest")}
-                    className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                      liveTab === "oldest"
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-500 hover:bg-slate-50"
-                    }`}
-                  >
-                    Oldest
-                  </button>
-                </div>
+              <div className="mt-9 flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
+
+                <Link
+                  to="/tests"
+                  className="group w-full sm:w-auto flex items-center justify-center gap-3 rounded-full bg-white px-7 py-3.5 text-sm font-bold text-[#080D20] shadow-lg hover:bg-indigo-50 transition"
+                >
+                  Explore Tests
+                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+
+                <Link
+                  to="/courses"
+                  className="w-full sm:w-auto flex items-center justify-center gap-3 rounded-full border border-white/20 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur hover:bg-white/10 transition"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  Explore Courses
+                </Link>
+
               </div>
-            </div>
 
-            {/* Loading */}
-            {loading ? (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {[1, 2, 3].map((item) => (
-                  <div
-                    key={item}
-                    className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
-                  >
-                    <div className="h-44 animate-pulse bg-slate-200" />
-                    <div className="space-y-3 p-4">
-                      <div className="h-5 w-2/3 animate-pulse rounded bg-slate-200" />
-                      <div className="h-3 w-full animate-pulse rounded bg-slate-100" />
-                      <div className="h-3 w-1/2 animate-pulse rounded bg-slate-100" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : filteredLiveTests.length === 0 ? (
-              <EmptyState
-                icon={<Radio size={30} />}
-                title="No live tests found"
-                description={
-                  search
-                    ? "Try searching with a different test name."
-                    : "There are no tests with LIVE codes yet. Generate a code to get started."
-                }
-              />
-            ) : (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredLiveTests.map((test) => {
-                  const stats = getTestStats(test.$id);
-
-                  return (
+              <div className="mt-9 flex items-center justify-center md:justify-start gap-3 text-sm text-slate-400">
+                <div className="flex -space-x-2">
+                  {[GraduationCap, BookOpen, Trophy].map((Icon, i) => (
                     <div
-                      key={test.$id}
-                      className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-red-200 hover:shadow-xl hover:shadow-slate-200/60"
+                      key={i}
+                      className="h-9 w-9 rounded-full bg-indigo-500 flex items-center justify-center border-2 border-[#080D20]"
                     >
-                      {/* Thumbnail */}
-                      <div className="relative h-44 overflow-hidden bg-slate-100">
-                        {test.thumbnail ? (
-                          <img
-                            src={getFileView(test.thumbnail)}
-                            alt={test.title}
-                            className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="flex size-full items-center justify-center bg-gradient-to-br from-red-50 to-orange-100 text-red-300">
-                            <BookOpenCheck size={48} />
-                          </div>
-                        )}
-
-                        <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full border border-white/50 bg-white/90 px-3 py-1.5 text-[10px] font-bold text-red-600 shadow-sm backdrop-blur">
-                          <span className="size-1.5 rounded-full bg-red-500" />
-                          LIVE ENABLED
-                        </div>
-
-                        <div className="absolute right-3 bottom-3 rounded-lg bg-black/60 px-2.5 py-1.5 text-[10px] font-semibold text-white backdrop-blur">
-                          {test.testCodes?.length || 0} Access Codes
-                        </div>
-                      </div>
-
-                      {/* Content */}
-                      <div className="space-y-4 p-4">
-                        <div>
-                          <h3 className="line-clamp-1 text-base font-bold text-slate-900">
-                            {test.title}
-                          </h3>
-
-                          <p className="mt-1 line-clamp-2 min-h-9 text-xs leading-5 text-slate-500">
-                            {test.description || "No description available."}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                          <CalendarDays size={14} />
-                          Created: {formatDateTime(test.$createdAt)}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="rounded-xl bg-blue-50 p-3">
-                            <div className="flex items-center gap-1.5 text-blue-600">
-                              <FileQuestion size={14} />
-                              <span className="text-[10px] font-semibold">
-                                Questions
-                              </span>
-                            </div>
-                            <p className="mt-1 text-lg font-bold text-slate-900">
-                              {stats.totalQuestions}
-                            </p>
-                          </div>
-
-                          <div className="rounded-xl bg-amber-50 p-3">
-                            <div className="flex items-center gap-1.5 text-amber-600">
-                              <Trophy size={14} />
-                              <span className="text-[10px] font-semibold">
-                                Total Marks
-                              </span>
-                            </div>
-                            <p className="mt-1 text-lg font-bold text-slate-900">
-                              {stats.totalMarks}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Codes */}
-                        <div className="border-t border-slate-100 pt-3">
-                          <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                            Available Codes
-                          </p>
-
-                          <div className="flex flex-wrap gap-1.5">
-                            {test.testCodes
-                              ?.filter((code) => code.startsWith("LIVE"))
-                              .map((code) => (
-                                <span
-                                  key={code}
-                                  className="rounded-lg border border-red-100 bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-600"
-                                >
-                                  {code}
-                                </span>
-                              ))}
-                          </div>
-                        </div>
-                      </div>
+                      <Icon className="h-4 w-4 text-white" />
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* CREATE / GENERATE CODE */}
-        {activeTab === "create" && (
-          <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
-
-            {/* Test List */}
-            <div className="space-y-4 lg:col-span-2">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">
-                  Select a Test
-                </h2>
-                <p className="mt-1 text-xs text-slate-500">
-                  Choose a test to generate its LIVE access code.
-                </p>
-              </div>
-
-              {/* Test Search */}
-              <div className="relative">
-                <Search
-                  size={17}
-                  className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400"
-                />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search all tests..."
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm outline-none transition focus:border-[#FF0A2B] focus:ring-2 focus:ring-red-100"
-                />
-              </div>
-
-              {loading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((item) => (
-                    <div
-                      key={item}
-                      className="h-24 animate-pulse rounded-2xl bg-slate-200"
-                    />
                   ))}
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {tests
-                    .filter((test) => {
-                      const value = search.toLowerCase();
+                <span>Learn. Practice. Achieve.</span>
+              </div>
+            </motion.div>
 
-                      return (
-                        test.title?.toLowerCase().includes(value) ||
-                        test.description?.toLowerCase().includes(value)
-                      );
-                    })
-                    .map((test) => {
-                      const isSelected = selectedTest?.$id === test.$id;
-                      const liveCodes =
-                        test.testCodes?.filter((code) =>
-                          code.startsWith("LIVE"),
-                        ) || [];
+            {/* Right Dashboard Illustration */}
 
-                      return (
-                        <button
-                          key={test.$id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedTest(test);
-                            setNewCode("");
-                            setError("");
-                            setSuccess("");
-                          }}
-                          className={`w-full rounded-2xl border p-4 text-left transition-all duration-200 ${
-                            isSelected
-                              ? "border-[#FF0A2B] bg-red-50/60 shadow-md shadow-red-100"
-                              : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-md"
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${
-                                isSelected
-                                  ? "bg-[#FF0A2B] text-white"
-                                  : "bg-slate-100 text-slate-500"
-                              }`}
-                            >
-                              <BookOpenCheck size={21} />
-                            </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8 }}
+              className="relative max-w-lg w-full mx-auto"
+            >
+              <div className="absolute -inset-5 rounded-[40px] bg-gradient-to-r from-indigo-500/20 to-blue-500/20 blur-2xl" />
 
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <h3 className="truncate text-sm font-bold text-slate-900">
-                                  {test.title}
-                                </h3>
+              <div className="relative rounded-[28px] border border-white/10 bg-white/[0.07] p-5 sm:p-7 shadow-2xl backdrop-blur-xl">
 
-                                {isSelected && (
-                                  <span className="flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-[10px] font-bold text-red-600">
-                                    <Check size={12} />
-                                    Selected
-                                  </span>
-                                )}
-                              </div>
-
-                              <p className="mt-1 line-clamp-1 text-xs text-slate-500">
-                                {test.description || "No description"}
-                              </p>
-
-                              <div className="mt-3 flex flex-wrap items-center gap-3">
-                                <span className="flex items-center gap-1 text-[10px] text-slate-400">
-                                  <Hash size={12} />
-                                  {test.$id}
-                                </span>
-
-                                <span className="flex items-center gap-1 text-[10px] font-semibold text-red-500">
-                                  <Radio size={12} />
-                                  {liveCodes.length} LIVE codes
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-
-                  {tests.filter((test) => {
-                    const value = search.toLowerCase();
-
-                    return (
-                      test.title?.toLowerCase().includes(value) ||
-                      test.description?.toLowerCase().includes(value)
-                    );
-                  }).length === 0 && (
-                    <EmptyState
-                      icon={<Search size={28} />}
-                      title="No tests found"
-                      description="Try another search keyword."
-                    />
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Code Generator Panel */}
-            <div className="lg:sticky lg:top-5">
-              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div className="bg-slate-900 p-5 text-white">
-                  <div className="mb-3 flex size-11 items-center justify-center rounded-xl bg-white/10">
-                    <Sparkles size={22} />
+                <div className="flex justify-between items-center mb-8">
+                  <div>
+                    <p className="text-xs text-slate-400">Welcome back</p>
+                    <h3 className="mt-1 text-lg font-bold">
+                      Learning Dashboard
+                    </h3>
                   </div>
 
-                  <h3 className="text-lg font-bold">
-                    Live Code Generator
-                  </h3>
-
-                  <p className="mt-1 text-xs leading-5 text-slate-300">
-                    Generate a unique code for your selected test.
-                  </p>
+                  <div className="h-11 w-11 rounded-2xl bg-indigo-500/20 flex items-center justify-center">
+                    <GraduationCap className="h-6 w-6 text-indigo-300" />
+                  </div>
                 </div>
 
-                <div className="space-y-5 p-5">
-                  {!selectedTest ? (
-                    <div className="py-6 text-center">
-                      <div className="mx-auto mb-3 flex size-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                        <BookOpenCheck size={26} />
-                      </div>
-
-                      <h4 className="text-sm font-bold text-slate-800">
-                        No Test Selected
-                      </h4>
-
-                      <p className="mx-auto mt-1 max-w-52 text-xs leading-5 text-slate-500">
-                        Select a test from the list to manage its access codes.
-                      </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <div className="h-10 w-10 rounded-xl bg-indigo-500/20 flex items-center justify-center mb-4">
+                      <FileQuestion className="h-5 w-5 text-indigo-300" />
                     </div>
-                  ) : (
-                    <>
-                      {/* Selected Test */}
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                          Selected Test
-                        </p>
+                    <p className="text-3xl font-bold">{tests.length}</p>
+                    <p className="mt-1 text-xs text-slate-400">Total Tests</p>
+                  </div>
 
-                        <h4 className="mt-1 text-sm font-bold text-slate-900">
-                          {selectedTest.title}
-                        </h4>
-
-                        <p className="mt-1 break-all text-[10px] text-slate-400">
-                          ID: {selectedTest.$id}
-                        </p>
-                      </div>
-
-                      {/* Existing Codes */}
-                      <div>
-                        <div className="mb-2 flex items-center justify-between">
-                          <p className="text-xs font-bold text-slate-700">
-                            Existing LIVE Codes
-                          </p>
-
-                          <span className="rounded-full bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600">
-                            {
-                              selectedTest.testCodes?.filter((code) =>
-                                code.startsWith("LIVE"),
-                              ).length || 0
-                            }{" "}
-                            Codes
-                          </span>
-                        </div>
-
-                        <div className="flex max-h-32 flex-wrap gap-2 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50 p-3">
-                          {selectedTest.testCodes?.filter((code) =>
-                            code.startsWith("LIVE"),
-                          ).length ? (
-                            selectedTest.testCodes
-                              ?.filter((code) => code.startsWith("LIVE"))
-                              .map((code) => (
-                                <span
-                                  key={code}
-                                  className="rounded-lg border border-red-100 bg-white px-2.5 py-1.5 text-[10px] font-bold text-red-600"
-                                >
-                                  {code}
-                                </span>
-                              ))
-                          ) : (
-                            <p className="text-xs text-slate-400">
-                              No LIVE codes generated yet.
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Generated Code */}
-                      <div>
-                        <label className="mb-2 block text-xs font-bold text-slate-700">
-                          Generated Code
-                        </label>
-
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            readOnly
-                            value={newCode}
-                            placeholder="LIVE code will appear here"
-                            className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-800 outline-none placeholder:font-normal placeholder:text-slate-400"
-                          />
-
-                          <button
-                            type="button"
-                            onClick={copyCode}
-                            disabled={!newCode}
-                            title="Copy code"
-                            className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
-                          >
-                            <Copy size={17} />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Generate Button */}
-                      <button
-                        type="button"
-                        onClick={generateLiveCode}
-                        disabled={generating}
-                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#FF0A2B] px-4 text-sm font-bold text-white shadow-lg shadow-red-500/20 transition hover:bg-[#e50928] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {generating ? (
-                          <>
-                            <Loader2 size={18} className="animate-spin" />
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <Plus size={18} />
-                            Generate LIVE Code
-                          </>
-                        )}
-                      </button>
-
-                      {/* Information */}
-                      <div className="flex gap-2 rounded-xl border border-blue-100 bg-blue-50 p-3">
-                        <ShieldAlert
-                          size={16}
-                          className="mt-0.5 shrink-0 text-blue-600"
-                        />
-
-                        <p className="text-[10px] leading-5 text-blue-700">
-                          Generated access codes must start with{" "}
-                          <strong>LIVE</strong>. Share the code with students
-                          to let them access the live test.
-                        </p>
-                      </div>
-                    </>
-                  )}
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <div className="h-10 w-10 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+                    </div>
+                    <p className="text-3xl font-bold">{publishedCount}</p>
+                    <p className="mt-1 text-xs text-slate-400">Published</p>
+                  </div>
                 </div>
+
+                <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-5">
+                  <div className="flex items-center justify-between mb-5">
+                    <span className="font-semibold text-sm">
+                      Learning Resources
+                    </span>
+                    <Sparkles className="h-4 w-4 text-yellow-300" />
+                  </div>
+
+                  {[
+                    { icon: BookOpen, title: "Study Materials", color: "text-blue-300", bg: "bg-blue-500/20" },
+                    { icon: Clock3, title: "Online Tests", color: "text-purple-300", bg: "bg-purple-500/20" },
+                    { icon: CalendarDays, title: "Upcoming Tests", color: "text-amber-300", bg: "bg-amber-500/20" },
+                  ].map((item) => (
+                    <div
+                      key={item.title}
+                      className="flex items-center gap-3 py-3 border-t border-white/10"
+                    >
+                      <div className={`h-9 w-9 rounded-xl ${item.bg} flex items-center justify-center`}>
+                        <item.icon className={`h-4 w-4 ${item.color}`} />
+                      </div>
+                      <span className="text-sm font-medium text-slate-300">
+                        {item.title}
+                      </span>
+                      <ArrowRight className="h-4 w-4 ml-auto text-slate-500" />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="absolute -right-4 -bottom-5 hidden sm:flex items-center gap-3 rounded-2xl border border-white/10 bg-[#17213D] p-4 shadow-xl">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                    <Trophy className="h-5 w-5 text-emerald-300" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400">Keep learning</p>
+                    <p className="text-sm font-bold">Achieve More!</p>
+                  </div>
+                </div>
+
               </div>
-            </div>
+            </motion.div>
+
           </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Statistics Card
-function StatCard({
-  title,
-  value,
-  icon,
-  color,
-}: {
-  title: string;
-  value: number;
-  icon: React.ReactNode;
-  color: "red" | "blue" | "amber";
-}) {
-  const colors = {
-    red: "bg-red-50 text-red-600",
-    blue: "bg-blue-50 text-blue-600",
-    amber: "bg-amber-50 text-amber-600",
-  };
-
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-semibold text-slate-500">{title}</p>
-          <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-            {value}
-          </h3>
         </div>
+      </section>
 
-        <div className={`flex size-11 items-center justify-center rounded-xl ${colors[color]}`}>
-          {icon}
+      {/* ================= STATS ================= */}
+
+      <section className="max-w-7xl mx-auto px-1 sm:px-2 mt-6 sm:mt-8">
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+          {[
+            {
+              title: "Total Tests",
+              value: tests.length,
+              icon: FileQuestion,
+              color: "text-indigo-600",
+              bg: "bg-indigo-50",
+            },
+            {
+              title: "Published Tests",
+              value: publishedCount,
+              icon: CheckCircle2,
+              color: "text-emerald-600",
+              bg: "bg-emerald-50",
+            },
+            {
+              title: "Upcoming Tests",
+              value: upcomingCount,
+              icon: CalendarDays,
+              color: "text-amber-600",
+              bg: "bg-amber-50",
+            },
+          ].map((stat, index) => (
+            <motion.div
+              key={stat.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+              className="flex items-center gap-4 rounded-[24px] border border-slate-200/70 bg-white p-5 shadow-sm hover:shadow-lg transition"
+            >
+              <div className={`h-12 w-12 rounded-2xl ${stat.bg} flex items-center justify-center`}>
+                <stat.icon className={`h-6 w-6 ${stat.color}`} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-900">
+                  {stat.value}
+                </p>
+                <p className="text-sm text-slate-500">{stat.title}</p>
+              </div>
+            </motion.div>
+          ))}
+
         </div>
-      </div>
-    </div>
+      </section>
+
+      {/* ================= TEST SECTION ================= */}
+
+      <section className="max-w-7xl mx-auto w-full px-1 sm:px-2 py-16 sm:py-20">
+
+        <div className="rounded-[28px] sm:rounded-[36px] border border-slate-200/80 bg-white p-5 sm:p-8 lg:p-10 shadow-sm">
+
+          {/* Heading */}
+
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-9">
+
+            <div>
+              <div className="flex items-center gap-2 text-indigo-600 text-sm font-semibold mb-3">
+                <Sparkles className="h-4 w-4" />
+                TEST YOUR KNOWLEDGE
+              </div>
+
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+                Explore Online Tests
+              </h2>
+
+              <p className="mt-3 text-sm sm:text-base text-slate-500">
+                Practice, evaluate your knowledge and improve your performance.
+              </p>
+            </div>
+
+            <Link
+              to="/tests"
+              className="hidden sm:inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition"
+            >
+              View All Tests
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          {/* Search and Tabs */}
+
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+
+            <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 p-1.5 w-full sm:w-fit">
+              {tabs.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex-1 sm:flex-none px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
+                    activeTab === tab
+                      ? "bg-slate-900 text-white shadow-md"
+                      : "text-slate-500 hover:bg-white"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative w-full md:w-72">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search tests..."
+                className="w-full rounded-full border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+              />
+            </div>
+
+          </div>
+
+          {/* Test Cards */}
+
+          {isLoading ? (
+            <div className="py-16">
+              <Loading text="Loading Tests..." />
+            </div>
+          ) : filteredTests.length === 0 ? (
+
+            <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 py-20 text-center">
+              <div className="mx-auto h-16 w-16 rounded-2xl bg-indigo-50 flex items-center justify-center">
+                <FileQuestion className="h-8 w-8 text-indigo-400" />
+              </div>
+
+              <h3 className="mt-5 text-lg font-bold text-slate-800">
+                No tests found
+              </h3>
+
+              <p className="mt-2 text-sm text-slate-500">
+                {search
+                  ? "Try searching with another keyword."
+                  : "There are no tests available in this category yet."}
+              </p>
+
+              <button
+                onClick={() => {
+                  setActiveTab("All");
+                  setSearch("");
+                }}
+                className="mt-5 rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-600 transition"
+              >
+                Reset Filters
+              </button>
+            </div>
+
+          ) : (
+
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+
+              {filteredTests.map((test, index) => (
+                <motion.div
+                  key={test.$id}
+                  initial={{ opacity: 0, y: 25 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.06 }}
+                  whileHover={{ y: -5 }}
+                  className="group"
+                >
+                  <Link
+                    to={getTestLink(test)}
+                    className="block h-full overflow-hidden rounded-[24px] border border-slate-200/80 bg-white shadow-sm hover:shadow-xl hover:shadow-indigo-900/5 transition-all duration-300"
+                  >
+
+                    <div className="relative h-48 overflow-hidden bg-slate-100">
+
+                      <img
+                        src={getFileView(test.thumbnail)}
+                        alt={test.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+
+                      <span
+                        className={`absolute top-4 right-4 rounded-full px-3 py-1.5 text-[10px] font-bold tracking-wide ${
+                          test.status === "PUBLISHED"
+                            ? "bg-emerald-500 text-white"
+                            : test.status === "UPCOMING"
+                              ? "bg-amber-400 text-slate-900"
+                              : "bg-white/90 text-slate-700"
+                        }`}
+                      >
+                        {test.status}
+                      </span>
+
+                      <div className="absolute bottom-4 left-4 flex items-center gap-2 text-white text-xs font-semibold">
+                        <GraduationCap className="h-4 w-4" />
+                        Indus Docx
+                      </div>
+
+                    </div>
+
+                    <div className="p-5">
+
+                      <h3 className="text-lg font-bold text-slate-900 line-clamp-1 group-hover:text-indigo-600 transition">
+                        {test.title}
+                      </h3>
+
+                      <p className="mt-2 min-h-10 text-sm leading-6 text-slate-500 line-clamp-2">
+                        {test.description}
+                      </p>
+
+                      <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
+
+                        <span className="text-xs font-medium text-slate-400">
+                          Online Assessment
+                        </span>
+
+                        <span className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-4 py-2 text-xs font-bold text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition">
+                          {test.status === "UPCOMING" ? "Coming Soon" : "Start Test"}
+                          <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+                        </span>
+
+                      </div>
+                    </div>
+
+                  </Link>
+                </motion.div>
+              ))}
+
+            </div>
+          )}
+
+        </div>
+      </section>
+
+      {/* ================= FOOTER ================= */}
+
+      
+
+    </main>
   );
-}
+};
 
-// Empty State
-function EmptyState({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center">
-      <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-        {icon}
-      </div>
-
-      <h3 className="text-base font-bold text-slate-800">{title}</h3>
-
-      <p className="mt-1 max-w-xs text-xs leading-5 text-slate-500">
-        {description}
-      </p>
-    </div>
-  );
-}
+export default Home;
