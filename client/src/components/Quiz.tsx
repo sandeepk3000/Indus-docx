@@ -14,7 +14,6 @@ import {
   ShieldCheck,
   CircleHelp,
   ClipboardList,
-  LoaderCircle,
 } from "lucide-react";
 
 import Typo from "./Typo";
