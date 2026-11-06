@@ -4,7 +4,6 @@ import {
   BookOpenCheck,
   CalendarDays,
   Check,
-  Clock3,
   Copy,
   FileQuestion,
   Hash,
