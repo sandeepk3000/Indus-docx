@@ -1,11 +1,11 @@
-import { logout } from "@/store/userSlice";
+
 
 import { useAuth0 } from "@auth0/auth0-react";
 import { GraduationCap, LogOut } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
-  const { logout, isAuthenticated, user } = useAuth0();
+  const { logout, isAuthenticated } = useAuth0();
   return (
     // create a footer with tailwind css my website name is indus docx
     // and copyright year is 2024
